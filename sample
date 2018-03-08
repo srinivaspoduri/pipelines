@@ -1,1 +1,2338 @@
 smaple file   
+package common;
+
+import ipm.IPMcomm;
+
+import java.awt.Rectangle;
+import java.awt.Robot;
+import java.awt.Toolkit;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.LineNumberReader;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Properties;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import javax.imageio.ImageIO;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.RandomStringUtils;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.openqa.selenium.Alert;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
+import org.openqa.selenium.ElementNotVisibleException;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.NoAlertPresentException;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.ie.InternetExplorerDriver;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import com.relevantcodes.extentreports.LogStatus;
+
+import reports.ExtentReports;
+
+import java.awt.event.KeyEvent;
+
+/**
+ * @author Balamurugan -balamth
+ * 
+ * **/
+public class WebDriverGenerics extends GlobalConstants
+
+{
+
+	/*Timeout in seconds*/
+
+	public static void webdriverWaitUntillVisibilityOfElement(WebElement element)
+	{
+		//balamth
+		try 
+		{
+			GlobalConstants.wait = new WebDriverWait(GlobalConstants.driver,30);
+			GlobalConstants.wait.until(ExpectedConditions.visibilityOf(element));
+		}catch (ElementNotVisibleException e) 
+		{
+			GlobalConstants.wait = new WebDriverWait(GlobalConstants.driver,20);
+			GlobalConstants.wait.until(ExpectedConditions.visibilityOf(element));
+		}
+		catch (Exception e) 
+		{
+			GlobalConstants.wait = new WebDriverWait(GlobalConstants.driver,10);
+			GlobalConstants.wait.until(ExpectedConditions.visibilityOf(element));
+		}
+	} 
+
+	public static By getElement(String locatorWithValue)
+	{
+
+		@SuppressWarnings("unused")
+		String tempLocateBy ="";
+		String tempLocateValue ="";
+		if(locatorWithValue.startsWith("id")||locatorWithValue.startsWith("Id"))
+		{
+			tempLocateBy ="id";
+			tempLocateValue=locatorWithValue.split("=")[1];
+			locator=By.id(tempLocateValue);
+		}
+		else if(locatorWithValue.startsWith("name")||locatorWithValue.startsWith("Name"))
+		{
+			tempLocateBy ="name";
+			tempLocateValue=locatorWithValue.split("=")[1];
+			locator=By.name(tempLocateValue);		
+		}
+		else if(locatorWithValue.startsWith("classname")||locatorWithValue.startsWith("ClassName"))
+		{
+			tempLocateBy ="className";
+			tempLocateValue=locatorWithValue.split("=")[1];
+			locator=By.className(tempLocateValue);		
+		}	
+		else if(locatorWithValue.startsWith("//"))
+		{
+			tempLocateBy ="Xpath";
+			tempLocateValue=locatorWithValue;
+			locator=By.xpath(tempLocateValue);		
+		}
+		else if(locatorWithValue.startsWith("(//"))
+		{
+			tempLocateBy ="Xpath";
+			tempLocateValue=locatorWithValue;
+			locator=By.xpath(tempLocateValue);		
+		}
+		else if(locatorWithValue.startsWith("((//"))
+		{
+			tempLocateBy ="Xpath";
+			tempLocateValue=locatorWithValue;
+			locator=By.xpath(tempLocateValue);		
+		}
+		else if(locatorWithValue.startsWith("xpath")||locatorWithValue.startsWith("Xpath"))
+		{
+			tempLocateBy ="xpath";
+			tempLocateValue=locatorWithValue.split(":")[1];
+			locator=By.xpath(tempLocateValue);		
+		}	
+		else if(locatorWithValue.startsWith("linkText")||locatorWithValue.startsWith("LinkText"))
+		{
+			tempLocateBy ="linkText";
+			tempLocateValue=locatorWithValue.split("=")[1];
+			locator=By.linkText(tempLocateValue);	
+
+		}
+		else if(locatorWithValue.startsWith("css")||locatorWithValue.startsWith("CSS"))
+		{
+			tempLocateBy ="css";
+			tempLocateValue=locatorWithValue.split(":")[1];
+			locator=By.cssSelector(tempLocateValue);	
+
+		}
+		return locator;
+	}
+
+	// WebDriver functions
+
+	public static void launchApp(String browsername, String url)
+	{
+		if(browsername.equalsIgnoreCase("firefox"))
+			{
+				driver =new FirefoxDriver();
+			}
+			else if(browsername.equalsIgnoreCase("chrome"))
+			{
+				ChromeOptions options = new ChromeOptions();
+				options.addArguments("chrome.switches","--disable-extensions");
+				System.setProperty("webdriver.chrome.driver", "./drivers/chromedriver.exe");
+				driver =new ChromeDriver();
+				driver.manage().window().maximize();
+			}
+			else if(browsername.equals("ie"))
+			{
+				System.setProperty("webdriver.ie.driver","./drivers/IE32.exe");
+				driver =new InternetExplorerDriver();
+				System.out.println(driver.getTitle());
+			}		
+			driver.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS);
+			driver.get(url);
+			Print_Util.logMessage(driver.getCurrentUrl());
+			ParentWindow=driver.getWindowHandle();		
+	}
+
+	public static void entertextByIDJavaScript(String ID, String Value)
+	{
+			JavascriptExecutor jse = (JavascriptExecutor) driver;
+			jse.executeScript("document.getElementById('"+ID+"').value = '"+Value+"';");
+			Print_Util.logMessage("entertextByIDJavaScript :: Entered the text as :: "+Value );
+	}
+	
+	public static void disableJSReadOnly(String ID)
+	{
+			JavascriptExecutor jse = (JavascriptExecutor) driver;
+			jse.executeScript("document.getElementById('"+ID+"').readOnly = false;");
+			Print_Util.logMessage("disableJSReadOnly :: Read only attribute is set as false in DOM" );
+	}
+
+	public static void enterTextByJavaScript(String LocatorWithValue, String text)
+	{	
+			element=driver.findElement(getElement(LocatorWithValue));
+			highLightElement(driver, element);
+			element.clear();
+			JavascriptExecutor myExecutor = ((JavascriptExecutor) driver);
+			myExecutor.executeScript("arguments[0].value='"+text+"';", element);
+			Print_Util.logMessage("enterTextByJavaScript :: Entered Value with JavaScript Executor as  ::  "+text );
+	} 
+
+	public static void enterTextById(String id, String value)
+	{			
+			element=driver.findElement(By.id(id));
+			webdriverWaitUntillVisibilityOfElement(element);
+			element.clear();
+			element.sendKeys(value);
+			Print_Util.logMessage("enterTextById :: value is entered in textbox " +value);
+	}
+
+	public static void enterTextByName(String name, String value)
+	{
+		element=driver.findElement(By.name(name));
+		webdriverWaitUntillVisibilityOfElement(element);
+		element.clear();
+		element.sendKeys(value);
+		Print_Util.logMessage("enterTextByName :: value is entered in textbox " +value);
+	}
+
+	public static void enterTextByClassName(String ClassName, String value)
+	{
+			element=driver.findElement(By.className(ClassName));
+			webdriverWaitUntillVisibilityOfElement(element);
+			element.clear();
+			element.sendKeys(value);
+			Print_Util.logMessage("enterTextByClassName :: value is entered in textbox " +value);
+	}
+
+	public static void enterTextByLinkText(String LinkText, String value)
+	{
+			element=driver.findElement(By.linkText(LinkText));
+			webdriverWaitUntillVisibilityOfElement(element);
+			element.clear();
+			element.sendKeys(value);
+			Print_Util.logMessage("enterTextByLinkText :: value is entered in textbox " +value);
+	}
+
+	public static void enterTextByXPath(String XPath, String value)
+	{
+			element=driver.findElement(By.xpath(XPath));
+			webdriverWaitUntillVisibilityOfElement(element);
+			element.clear();
+			element.sendKeys(value);
+			Print_Util.logMessage("enterTextByXPath :: value is entered in textbox " +value);
+		}
+
+	public static void enterTextByCssSelector(String CssSelector, String value)
+	{
+		element=driver.findElement(By.cssSelector(CssSelector));
+		webdriverWaitUntillVisibilityOfElement(element);
+		element.clear();
+		element.sendKeys(value);
+		Print_Util.logMessage("enterTextByCssSelector :: value is entered in textbox " +value);
+	}
+
+	public static void enterTextByTagName(String TagName, String value)
+	{
+		element=driver.findElement(By.tagName(TagName));
+		webdriverWaitUntillVisibilityOfElement(element);
+		element.clear();
+		element.sendKeys(value);
+		Print_Util.logMessage("enterTextByTagName :: value is entered in textbox " +value);
+
+	}
+
+	public static void enterText(String LocatorWithValue ,String value)
+	{
+			element=driver.findElement(getElement(LocatorWithValue));
+			webdriverWaitUntillVisibilityOfElement(element);
+			element.clear();
+			element.sendKeys(value);
+			Print_Util.logMessage("enterText :: value is entered in textbox " +value);			
+	}
+
+	public static void enterText(WebElement element ,String value)
+	{
+			webdriverWaitUntillVisibilityOfElement(element);
+			element.clear();
+			element.sendKeys(value);
+			Print_Util.logMessage("enterText :: value is entered in textbox " +value);			
+	}
+
+	public static void clearText(String locatorWithValue)
+	{
+			element = driver.findElement(getElement(locatorWithValue));
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver, element);
+			element.clear();
+			Print_Util.logMessage("Cleared the Value");
+
+	}
+
+	/**
+	 * Click the webElement using below Wrapper Methods
+	 * @param value
+	 */
+
+	public static void clickByClassName(String value)
+	{
+			element=driver.findElement(By.className(value));
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver, element);
+			element.click();
+			Print_Util.logMessage("clickByClassName :: Element "+value +" is clicked");
+	}
+
+	public static void clickById(String value)
+	{
+			element=driver.findElement(By.id(value));
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver, element);
+			element.click();
+			Print_Util.logMessage("clickById :: Element "+value +" is clicked");
+	}
+
+	public static void clickByName(String value)
+	{
+			element=driver.findElement(By.name(value));
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver, element);
+			element.click();
+			Print_Util.logMessage("clickByName :: Element "+value +" is clicked");
+	}
+
+	public static void clickByXPath(String value)
+	{
+		element=driver.findElement(By.xpath(value));
+		webdriverWaitUntillVisibilityOfElement(element);
+		highLightElement(driver, element);
+		element.click();
+		Print_Util.logMessage("clickByXPath :: Element "+value +" is clicked");
+	}
+
+	public static void clickByLinkText(String value)
+	{
+			element=driver.findElement(By.linkText(value));
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver, element);
+			element.click();
+			Print_Util.logMessage("clickByLinkText :: Element "+value +" is clicked");
+	}
+
+	public static void clickByCssSelector(String value)
+	{
+			element=driver.findElement(By.cssSelector(value));
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver, element);
+			element.click();
+			Print_Util.logMessage("clickByCssSelector :: Element "+value +" is clicked");			
+
+	}
+
+	public static void clickByPartialLinkText(String value)
+	{
+			element=driver.findElement(By.partialLinkText(value));
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver, element);
+			element.click();
+			Print_Util.logMessage("clickByPartialLinkText :: Element "+value +" is clicked");
+	}
+
+	public static void clickByTagName(String value)
+	{
+			element=driver.findElement(By.tagName(value));
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver, element);
+			element.click();
+			Print_Util.logMessage("clickByTagName :: Element "+value +" is clicked");
+	}
+
+	public static void click(String locatorWithvalue)
+	{
+			element=driver.findElement(getElement(locatorWithvalue));
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver,element);
+			element.click();
+			Print_Util.logMessage("Element Clicked with :" + locatorWithvalue);			
+	}
+
+	public static void click(WebElement element)
+	{
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver,element);
+			element.click();
+			Print_Util.logMessage("Element Clicked with :" + element);			
+	}
+
+	public static void clickByActionsClass(String locatorWithvalue)
+	{
+			element=driver.findElement(getElement(locatorWithvalue));
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver,element);
+			actions.click(element).build().perform();
+			Print_Util.logMessage("Element Clicked with :" + locatorWithvalue);			
+	}
+
+
+	public static void ClickByJavaScript(String locatorWithValue)
+	{
+			element=driver.findElement(getElement(locatorWithValue));
+			highLightElement(driver, element);
+			((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+			Print_Util.logMessage("Element Clicked By JavaScript Executor with locator:" + locatorWithValue);
+	}
+
+	public static void ClickByJavaScriptByElement(WebElement element)
+	{
+			highLightElement(driver, element);
+			((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+			Print_Util.logMessage("Element Clicked By JavaScript Executor with Element");
+	}
+
+	public static void ClickElementByJavaScript(WebElement element)
+	{
+			highLightElement(driver, element);
+			((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+			Print_Util.logMessage("Element Clicked By JavaScript Executor with element");
+	}
+
+	public static void doubleClick(String locatorWithvalue)
+	{
+		element=driver.findElement(getElement(locatorWithvalue));
+		webdriverWaitUntillVisibilityOfElement(element);
+		Actions act =new Actions(driver);
+			highLightElement(driver,element);
+			act.moveToElement(element).doubleClick().build().perform();
+			Print_Util.logMessage("Element Double Clicked with :" + locatorWithvalue);		
+	}
+
+	public static void moveToElementAndClick(String locatorWithvalue)
+	{
+
+		element=driver.findElement(getElement(locatorWithvalue));
+		webdriverWaitUntillVisibilityOfElement(element);
+		Actions act =new Actions(driver);
+		
+		highLightElement(driver,element);
+		act.moveToElement(element).doubleClick().build().perform();
+		Print_Util.logMessage("moveToElementAndClick :: Element Clicked with Mouse :" + locatorWithvalue);		
+		}
+
+	/*
+	 * select Method is used to select the value from Dropdown*/
+
+	public static void selectByValue(String locatorWithValue, String value)
+	{
+		element=driver.findElement(getElement(locatorWithValue));
+		webdriverWaitUntillVisibilityOfElement(element);
+		highLightElement(driver, element);
+		Select St =new Select(element);
+		St.selectByValue(value);
+		Print_Util.logMessage("Element selected with selectByValue : "+value);
+	}
+
+	public static void selectByValue(WebElement element, String value)
+	{
+		webdriverWaitUntillVisibilityOfElement(element);
+		highLightElement(driver, element);
+		Select St =new Select(element);
+		St.selectByValue(value);
+		Print_Util.logMessage("Element selected with selectByValue : "+value);
+	}
+
+	public static void selectByVisibleText(String locatorWithValue, String value)
+	{
+		element=driver.findElement(getElement(locatorWithValue));
+		webdriverWaitUntillVisibilityOfElement(element);
+		highLightElement(driver, element);
+		Select St =new Select(element);
+			St.selectByVisibleText(value);
+			Print_Util.logMessage("Element Selected with VisibleText : "+value);
+
+	}
+
+	public static void selectByVisibleText(WebElement element, String value)
+	{
+		webdriverWaitUntillVisibilityOfElement(element);
+		highLightElement(driver, element);
+		Select St =new Select(element);
+			St.selectByVisibleText(value);
+			Print_Util.logMessage("Element Selected with VisibleText : "+value);
+	}
+
+	public static void selectByIndex(String locatorWithValue, int index)
+	{
+			element=driver.findElement(getElement(locatorWithValue));
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver, element);
+			Select St =new Select(element);
+			St.selectByIndex(index);
+			Print_Util.logMessage("Element Selected at Index : "+index);
+	}
+
+	/*acceptAlert method is used to Accept the alert*/
+	public static boolean isAlertPresent() 
+	{ 
+		try 
+		{ 
+			driver.switchTo().alert(); 
+			return true; 
+		}   // try 
+		catch (NoAlertPresentException Ex) 
+		{ 
+			return false; 
+		}   // catch 
+	} 
+
+	public static void acceptAlert()
+	{
+			Alert at =driver.switchTo().alert();
+			at.accept();
+			Print_Util.logMessage("Alert present & accepted !!");
+	}
+
+	public static void verifyAlertPresent_GetText_Accept(String storeAlertTextInVariable)
+	{
+			Alert at =driver.switchTo().alert();
+			Print_Util.logMessage("driver Control moved to Alert");
+			hashMap.put(storeAlertTextInVariable, at.getText());
+			Print_Util.logMessage("Alert Text stored in "+ storeAlertTextInVariable +" = " +at.getText().toString());
+
+			at.accept();
+			Print_Util.logMessage("Alert present & accepted !!");
+	}
+
+	public static boolean acceptWindowAlert(WebDriver webdriver) {
+		String alertText = "NO TEXT";
+		try {
+
+			System.err.println("Inside acceptWindowAlert method ");
+			WebDriverWait wait = new WebDriverWait(webdriver, 30);
+
+			wait.until(ExpectedConditions.alertIsPresent());
+
+			// This will wait for a maximum of 5 seconds, everytime wait is used
+			// wait.until(ExpectedConditions.alertIsPresent());
+			// Before you try to switch to the so given alert, he needs to be
+			// present.
+			Alert alert = webdriver.switchTo().alert();
+			System.err.println("Inside acceptWindowAlert switch to alert done ");
+			alertText = alert.getText();
+			System.err.println("Inside acceptWindowAlert:: alertGetText ");
+			Print_Util.logMessage("Getting Alert in the screen : [" + alertText + "]");
+			alert.accept();
+			System.err.println("Inside acceptWindowAlert:: alertAccepted ");
+			return true;
+
+		} catch (NoAlertPresentException ex) {
+			Print_Util.logMessage("No Alert Present");
+			return false;
+		} catch (TimeoutException e) {
+			Print_Util.logMessage("Time out waiting for Alert");
+			return false;
+		}
+	}
+
+
+	/*dismissAlert method is used to Dismiss the alert*/
+	public static void dismissAlert()
+	{
+			Alert at =driver.switchTo().alert();
+			Print_Util.logMessage("driver Control moved to Alert");
+			at.dismiss();
+			Print_Util.logMessage("Alert dismissed !!");
+	}
+
+	/*getAlertText method is used to gettext form Alert and store in hashTable object at runtime*/
+
+	public static void alertGetText(String storeAlertTextInVariable)
+	{
+	
+			Alert at =driver.switchTo().alert();
+			Print_Util.logMessage("driver Control moved to Alert");
+			hashMap.put(storeAlertTextInVariable, at.getText());
+			Print_Util.logMessage("Alert Text stored in "+ storeAlertTextInVariable +" = " +at.getText().toString());
+	}
+
+	public static String getAlertTextandAccept(String KeyToStoreAlertTextInHashMap)
+	{
+		String value="";
+		
+			Alert at =driver.switchTo().alert();
+			Print_Util.logMessage("driver Control moved to Alert");
+			GlobalConstants.hashMap.put(KeyToStoreAlertTextInHashMap, at.getText());
+			value=GlobalConstants.hashMap.get(KeyToStoreAlertTextInHashMap).toString();
+			Print_Util.logMessage("Alert Text stored in key :: "+ KeyToStoreAlertTextInHashMap +" = " +at.getText().toString());
+			at.accept();
+		return value;
+	}
+
+	/*alertSendKeys method is used to Send values to alert present*/
+	public void alertSendKeys(String sendTextToAlert)
+	{	
+			Alert at =driver.switchTo().alert();
+			Print_Util.logMessage("driver Control moved to Alert");
+			at.sendKeys(sendTextToAlert);
+			Print_Util.logMessage("Text is entered in alert :: "+sendTextToAlert);
+	}
+
+	/*verifyUrl method is used to verify the current page URL with URL passed in arguments
+	 * 
+	 * */
+
+	public static Boolean verifyCurrentUrl(String ExpectedURL)
+	{
+		booleanValue =true;
+		
+			actualValue =driver.getCurrentUrl();
+			expectedvalue=ExpectedURL;
+			Print_Util.logMessage("verifyCurrentUrl:: Expected URL is "+expectedvalue);
+			Print_Util.logMessage("verifyCurrentUrl:: Actual URL is   "+actualValue);
+
+			if(actualValue.equals(expectedvalue))
+			{
+				Print_Util.logMessage("verifyCurrentUrl :: Actual and Expected URL is matched");	
+
+			}else
+			{
+				Print_Util.logError("verifyCurrentUrl :: Actual and Expected URL is not matched");
+				booleanValue =false;
+			}
+		return booleanValue;
+	}
+
+	/* verifyPageTitle method is used to compare the application Title*/
+	public static Boolean verifyPageTitle(String ExpectedPageTitle)
+
+	{
+		booleanValue =true;
+	
+			actualValue=driver.getTitle().toString();		
+			if(actualValue.contains(ExpectedPageTitle))
+			{
+				Print_Util.logMessage("verifyPageTitle:: Expected and Actual value matches");
+
+			}else
+			{
+				Print_Util.logError("Expected and Actual Page Title not matches");
+				Print_Util.logMessage("Expected PageTitle is::" +ExpectedPageTitle);
+				Print_Util.logError("Actual PageTitle is::" +actualValue);
+				booleanValue=false;
+			}
+		return booleanValue;
+	}
+
+	/*
+	 * verifyText * verifyPartialText 
+	 * method is used to verify Text*/
+
+	public static Boolean verifyText(String LocatorWithvalue ,String ExpectedText) throws IOException
+	{
+		booleanValue=true;
+		
+			expectedvalue=ExpectedText;
+			actualValue =driver.findElement(getElement(LocatorWithvalue)).getText().toString();
+
+			if(actualValue.isEmpty()||actualValue.equals(""))
+			{
+				WebDriverUtil.waitForPageLoaded(driver);
+				actualValue =element.getAttribute("value").toString();
+			}
+
+			Print_Util.logDebug("Expected Text is :" + expectedvalue);
+			Print_Util.logDebug("Actual Text is   :" +  actualValue);
+
+			if(expectedvalue.equals(actualValue)|| expectedvalue.contains(actualValue))
+			{
+				Print_Util.logMessage("verifyText :: Expected and Actual Text matched");
+
+			}else
+			{
+				Print_Util.logError("verifyText :: Expected and Actual Text not matched");
+				booleanValue=false;
+			}
+		return booleanValue;
+	}
+
+	public static Boolean verifyPartialText(String LocatorWithvalue ,String ExpectedPartialText)
+	{
+		booleanValue=true;
+	
+			expectedvalue=ExpectedPartialText;
+			actualValue =driver.findElement(getElement(LocatorWithvalue)).getText().toString();
+
+			highLightElement(driver, findelement(LocatorWithvalue));
+			Print_Util.logMessage("ExpectedPartialText is :" + expectedvalue);
+			Print_Util.logMessage("ActualText is   :" +  actualValue);
+
+			if(actualValue.contains(expectedvalue))
+			{
+				Print_Util.logMessage("verifyPartialText :: Expected and Actual PartialText matched");
+			}else
+			{
+				Print_Util.logError("verifyPartialText :: Expected and Actual PartialText not matched");
+				booleanValue=false;
+			}
+		return booleanValue;
+	}
+
+	/*
+	 * storeText method is used to store the Values at runTime */
+
+	public static void storeText(String LocatorWithValue, String key)
+	{
+			actualValue=driver.findElement(getElement(LocatorWithValue)).getText().toString();
+			if(! hashTable.contains(key))
+			{
+				hashTable.put(key, actualValue);
+				Print_Util.logMessage("Stroed Text in hashTable with Key and Value " +key +"::"+ actualValue);
+
+			}else
+			{
+				Print_Util.logError("Already key found in hashTable");
+			}
+	}
+
+	/*
+	 * verifyText method is used to verify text stored in hashTable*/
+
+	public static void verifyStoredText(String LocatorWithvalue ,String key)
+	{
+			String tempExpected =(String) hashTable.get(key);
+			actualValue =driver.findElement(getElement(LocatorWithvalue)).getText();
+			Print_Util.logMessage("Stored ExpectedText is :" + tempExpected);
+			Print_Util.logMessage("ActualText is   :" +  actualValue);
+			if(tempExpected.equals(actualValue)||tempExpected.contains(actualValue))
+			{
+				Print_Util.logMessage("verifyStoredText :: Expected and Actual Text matched");
+			}else
+			{
+				Print_Util.logError("verifyStoredText :: Expected and Actual Text not matched");
+			}
+
+	}
+
+	public static String getText(String locatorWithValue)
+	{
+		String value="";
+		
+			element=driver.findElement(getElement(locatorWithValue));
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver, element);
+			WebDriverUtil.waitForPageLoaded(driver);
+			value =element.getText().toString();	
+
+			if(value.isEmpty()||value.equals(""))
+			{
+				WebDriverUtil.waitForPageLoaded(driver);
+				value =element.getAttribute("value").toString();
+			}
+			Print_Util.logMessage("getText value is ::"+value  );
+
+		return value;
+	}
+
+
+	public static String getText(WebElement element)
+	{
+		String value="";
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver, element);
+			WebDriverUtil.waitForPageLoaded(driver);
+			value =element.getText().toString();	
+
+			if(value.isEmpty()||value.equals(""))
+			{
+				WebDriverUtil.waitForPageLoaded(driver);
+				value =element.getAttribute("value").toString();
+			}
+			Print_Util.logMessage("getText value is ::"+value  );
+		return value;
+	}
+
+
+	// Frame Handle
+	/*switchToFirstFrame method is used to switch to frame by index value*/
+	public static void switchToFirstFrame(int index)
+	{
+			driver.switchTo().frame(index);		
+			Print_Util.logMessage("driver control switched to frame by index :" +index);
+	}
+
+	/*switchToFrameByElement method is used to switch the driver into Frame by its element*/
+	public static void switchToFrameByElement(String LoactorWithValue)
+	{
+			element =driver.findElement(getElement(LoactorWithValue));
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver, element);
+			driver.switchTo().frame(element);
+			Print_Util.logMessage("driver control switched to frame by Element : " +LoactorWithValue);
+	}
+
+	/*Switch to frame by name or id 
+	 * */
+	public void switchToFrame(String NameorID)
+	{
+			driver.switchTo().frame(NameorID);
+			Print_Util.logMessage("driver control switched to frame by NameorID : " +NameorID);	
+	}
+
+	public static void frameDefaultContent()
+	{
+			driver.switchTo().defaultContent();
+			Print_Util.logMessage("Switched to frame DefaultContent....! ");
+	}
+
+	/*Declare ParentWindow in class level and Store the parentWindow in lauchApp method*/
+	public static void switchToPrimaryWindow()
+	{
+			driver.switchTo().window(GlobalConstants.ParentWindow);
+			Print_Util.logMessage("switchToPrimaryWindow :: "+GlobalConstants.ParentWindow +" switched to parentwindow succesfully.");
+			Print_Util.logDebug(GlobalConstants.driver.getCurrentUrl());
+	
+	}
+
+	/*switchToPrimaryWindow method is used to switch the control to primary window*/
+	public static void switchToPrimaryWindow(String SwitchToparentWin)
+	{
+			driver.switchTo().window(SwitchToparentWin);
+			Print_Util.logMessage("switchToPrimaryWindow(String SwitchToparentWin) :: executed succesfully.");
+	}
+
+
+	/*storePrimaryWindow method is used to store the parent URL*/
+
+	public static void storePrimaryWindow(String KeyforParentWindow)
+	{
+		
+			if(! hashTable.contains(KeyforParentWindow))
+			{
+				hashTable.put(KeyforParentWindow, driver.getWindowHandle());
+
+				Print_Util.logError("storePrimaryWindow :: primaryWindow address is stored in hashtable with key & Value as :: "+KeyforParentWindow +" & " +driver.getWindowHandle().toString());
+			}else
+			{
+				Print_Util.logError("Key already found in hashtable : "+KeyforParentWindow);
+			}
+	}
+
+	public static void switchToLastWindow()
+	{
+		
+			Set<String> windows = driver.getWindowHandles();
+			int winSize = windows.size();
+			Print_Util.logMessage("Number of windows to handle is : " + winSize);
+			int i = 1;
+			for (String window : windows) 
+			{
+
+				driver.switchTo().window(window);
+				Print_Util.logMessage("Window no :: " + i + " and "
+						+ driver.getCurrentUrl());
+				i++;
+			}
+	}
+
+	public static void switchToLastWindow(String locatorWithValue) throws Exception
+	{
+
+		GlobalConstants.ParentWindow=driver.getWindowHandle();
+		Print_Util.logMessage("ParentWindow session ID is ::"+GlobalConstants.ParentWindow);
+
+			WebDriverUtil.waitForPageLoaded(driver);
+			driver.findElement(getElement(locatorWithValue)).click();
+			waitForsec(10);			
+			//						element=findelement(locatorWithValue);
+			//						actions.click(element).build().perform();
+			//			WebDriverUtil.waitForPageLoaded(driver);			
+
+			Set<String> windows = driver.getWindowHandles();						
+			Print_Util.logMessage("Number of windows to handle is : " + windows.size());			
+
+			for (String window : windows) 
+			{
+				driver.switchTo().window(window);
+				driver.manage().window().maximize();
+				WebDriverUtil.waitForPageLoaded(driver);
+			}	
+	}		
+
+	public static void switchToLastWindow_NoWinMax(String locatorWithValue) throws Exception
+	{
+
+		GlobalConstants.ParentWindow=GlobalConstants.driver.getWindowHandle();
+		Print_Util.logMessage("ParentWindow session ID is ::"+GlobalConstants.ParentWindow);
+		
+			driver.findElement(getElement(locatorWithValue)).click();
+			WebDriverUtil.waitForPageLoaded(GlobalConstants.driver);
+			waitForsec(6);
+
+			Set<String> windows = GlobalConstants.driver.getWindowHandles();	
+			System.out.println(windows);
+			Print_Util.logMessage("Number of windows to handle is : " + windows.size());
+			for (String window : windows) 
+			{
+				driver.switchTo().window(window);
+				System.out.println(driver.getCurrentUrl());
+				WebDriverUtil.waitForPageLoaded(GlobalConstants.driver);
+			}	
+	}
+
+	public static void switchToLastWindow(WebElement element) throws Exception
+	{
+
+		GlobalConstants.ParentWindow=driver.getWindowHandle();
+		Print_Util.logMessage("ParentWindow session ID is ::"+GlobalConstants.ParentWindow);
+
+		element.click();
+			//			element=findelement(locatorWithValue);
+			//			actions.click(element).build().perform();
+			WebDriverUtil.waitForPageLoaded(driver);
+
+			Set<String> windows = driver.getWindowHandles();
+			Print_Util.logMessage("Number of windows to handle is : " + windows.size());
+			for (String window : windows) 
+			{
+				driver.switchTo().window(window);
+				driver.manage().window().maximize();
+				WebDriverUtil.waitForPageLoaded(driver);
+			}
+	}
+
+	/**
+	 * isDisplayed method is used to check whether element is present or not
+	 */
+
+	public static void elementIsDisplayed(String LocatorWithValue)
+	{
+		try {
+			element=driver.findElement(getElement(LocatorWithValue));
+			webdriverWaitUntillVisibilityOfElement(element);
+			if(element.isDisplayed())
+			{
+				Print_Util.logMessage("Element is Displayed with locator value :: "+ LocatorWithValue);
+				ResultClass.testStatus(true);
+			}
+		}
+		catch (Exception e)
+		{
+			Print_Util.logError("Element id not displayed with :" +LocatorWithValue);
+		}
+	}
+
+
+	public static Boolean isDisplayed(String LocatorWithValue)
+	{
+		booleanValue= false;
+		try {
+			element=driver.findElement(getElement(LocatorWithValue));
+			highLightElement(driver, element);
+			if(element.isDisplayed())
+			{
+				Print_Util.logMessage("Element is displayed.");
+				booleanValue=true;
+			}
+		}
+		catch (ElementNotVisibleException e)
+		{
+			Print_Util.logError("Element could not be found with :" +LocatorWithValue);
+		}
+		return booleanValue ;
+	} 
+	
+	/**
+	 * isEnabled method is used to check whether element is Enabled in webPage or not
+	 * @param LocatorWithValue
+	 * @return
+	 */
+	public static Boolean isEnabled(String LocatorWithValue)
+	{
+		booleanValue= false;
+			element=driver.findElement(getElement(LocatorWithValue));
+			highLightElement(driver, element);
+			if(element.isEnabled())
+			{
+				Print_Util.logMessage("Element is enabled.");
+				booleanValue=true;
+			}else
+			{
+
+				Print_Util.logError("Element is not enabled.");
+				booleanValue=true;
+			}
+		
+		return booleanValue ;
+	} 
+	/**
+	 * IsSelected Method is used to check whther element is Selected in page or not
+	 * @param LocatorWithValue
+	 * @return
+	 */
+
+	public static Boolean isSelected(String LocatorWithValue)
+	{
+		booleanValue = false;
+
+			element=driver.findElement(getElement(LocatorWithValue));
+			highLightElement(driver, element);
+			if(element.isSelected())
+			{
+				Print_Util.logMessage("Element is selected.");
+				booleanValue=true;
+			}else
+			{
+				Print_Util.logError("Element is not selected.");
+				booleanValue=false;
+			}
+	
+		return booleanValue ;
+	} 
+
+	public static void setWindowSize(int winWidth ,int winHeight)
+	{
+
+			Dimension dim = new Dimension(winWidth, winHeight);
+			driver.manage().window().setSize(dim);
+	}
+
+	public static void deleteAllCookies()
+	{
+		try {
+			System.out.println(driver);
+			driver.manage().deleteAllCookies();
+			Print_Util.logMessage("deleteAllCookies :: Deleted all cookies from browser");
+		} catch (Exception e) {
+			Print_Util.logError("Cookies not cleared !");
+		}
+	}
+
+	public static void browserBack() {
+		try {
+			driver.navigate().back();
+			Print_Util.logMessage("Browser navigated to back ");
+		} catch (WebDriverException e) {
+
+			Print_Util.logError("Browser not navigated to back due to exception :: " +e.getMessage());
+		}
+	}
+
+	public static void browserForward()
+	{
+		try {
+			driver.navigate().forward();
+			Print_Util.logMessage("Browser navigated to Forward ");
+		} catch (WebDriverException e) {
+			Print_Util.logError("Browser not navigated to forwarded due to exception :: " +e.getMessage());
+		}
+	}
+
+	public  static void refreshPage() throws IOException
+	{
+		try {
+			driver.navigate().refresh();
+			WebDriverUtil.waitForPageLoaded(driver);
+			Print_Util.logMessage("Browser refreshed");
+
+		} catch (WebDriverException e) {
+
+			Print_Util.logError("Browse not refreshed !");
+		}
+	}
+
+	public static void navigateToURL(String URL) {
+		// driver=new InternetExplorerDriver();
+			driver.get(URL);
+			WebDriverUtil.waitForPageLoaded(driver);
+			Print_Util.logMessage("navigateToURL :: Navigate to the URL");
+	}
+
+	/**
+	 * closeBrowser method is used to close the Web driver browser
+	 */
+
+	public static void closeBrowser()
+	{
+		
+			driver.close();
+			Print_Util.logMessage("Browser closed successfully");
+	}
+
+	/**
+	 * quitBrowser method is used to quit the Web driver browser
+	 */
+	public static void quitBrowser()
+	{
+		Print_Util.logMessage("Browser Quited !!");
+		driver.quit();
+	}
+
+
+	public static String getHashTableValue(String key)
+	{
+		Object value =hashTable.get(key);
+		System.out.println("getHashTableValue value :: "+ value.toString());
+		return  value.toString();
+	}
+
+	public static String getHashMap(String key)
+	{
+		Object value = null;
+		try
+		{
+			value = hashMap.get(key);
+			System.err.println("From HashMap --> "+key +" value is :: "+ value.toString());
+		}
+		catch (Exception e)
+		{
+			Print_Util.logError("Webdrivergenerics.getHashMap :: Unable to get value for Key from hashMap --> "+key);
+		}
+		return value.toString();
+	}
+
+
+	/**
+	 * Used to take Screenshots
+	 * @param imgName
+	 */
+
+	public static void takeScreenShot(String imgName) throws Exception
+	{
+		//Date date =new Date();
+		//SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss") ;
+		File scrFile = ((TakesScreenshot)driver).getScreenshotAs(OutputType.FILE);
+		try 
+		{
+			//FileUtils.copyFile(scrFile, new File(System.getProperty("user.dir")+"/Screenshot/"+imgName+"_"+dateFormat.format(date)+".png"));
+			FileUtils.copyFile(scrFile, new File(System.getProperty("user.dir")+"/Screenshot/"+imgName+".png"));
+			waitForsec(2);
+			ExtentReports.test.log(LogStatus.INFO, imgName, ExtentReports.test.addScreenCapture(System.getProperty("user.dir")+"/Screenshot/"+imgName+".png"));
+		}
+		catch (IOException e)
+		{
+			Print_Util.logError("Screenshot not taken...");
+		}
+	
+	}
+
+
+
+	public static String takeScreenShot_Robot(String imgName) throws Exception
+	{
+
+		Date date =new Date();
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss") ;
+
+		Robot robot = new Robot(); 
+		String format = "png";    
+
+		Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
+		BufferedImage screenFullImage = robot.createScreenCapture(screenRect);
+		String imageName =imgName+"_"+dateFormat.format(date)+".png";
+		ImageIO.write(screenFullImage, format, new File(System.getProperty("user.dir")+"/Screenshot/"+imageName));
+		return imageName;
+	}
+
+	// Wait methods
+	public static void waitFor() throws Exception {
+		try {
+			for(int a=1;a<=5;a++)
+			{
+				Thread.sleep(1000);
+				//System.out.println("waiting....");
+			}
+		} catch (Exception e) {
+			Print_Util.logError("waitFor method Exception" + e.getMessage());
+			GlobalConstants.booleanValue = false;
+		}
+	}
+
+
+	public static void waitFor(int time) throws Exception {
+		try {
+			Thread.sleep(time);
+			//System.out.println("waitFor method complete");
+		} catch (Exception e) {
+			Print_Util.logError("waitFor method Exception" + e.getMessage());
+			GlobalConstants.booleanValue = false;
+		}
+	}
+
+	public static void waitForsec(int time) throws Exception {
+		try {
+			for(int a=1;a<=time;a++)
+			{
+				Thread.sleep(1000);
+				//System.out.println("waiting....");
+			}
+		} catch (Exception e) {
+			Print_Util.logError("waitFor method Exception" + e.getMessage());
+			GlobalConstants.booleanValue = false;
+		}
+	}
+
+
+
+	public static void sleep(int sleepSeconds) 
+	{
+		try {
+			Thread.sleep(sleepSeconds);
+			//Print_Util.logMessage("Thread.sleep completed");
+		} catch (InterruptedException e) {
+			Print_Util.logError("Timeout Exception");
+		}
+	}
+	// Function to switch to Default Frame
+
+	// Function used to highlight element at runtime
+	public static  void highLightElement(WebDriver driver, WebElement element)
+	{
+		JavascriptExecutor js=(JavascriptExecutor)driver; 
+		js.executeScript("arguments[0].setAttribute('style', 'background: yellow; border: 5px solid red;');", element);
+		try 
+		{
+			Thread.sleep(500);
+		} 
+		catch (InterruptedException e) 
+		{
+			Print_Util.logDebug("highLightElement method :: "+e.getMessage());
+		} 
+		js.executeScript("arguments[0].setAttribute('style','border: solid 2px white')", element); 
+	}
+
+	// WebTable concepts
+	//To get Webtable row count
+	public static int getWebTableRowCount( String LocatorwithValue)
+	{ 
+		int size=0;
+		try {
+			// Getting Table name
+			element = driver.findElement(getElement(LocatorwithValue));
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver, element);
+			// Getting row count
+			ListofElements = element.findElements(By.tagName("tr"));
+			size = ListofElements.size();
+			Print_Util.logMessage("getWebTableRowCount :: Number of rows is : "+size);
+
+		} catch (Exception e) {
+
+			Print_Util.logError("getWebTableRowCount :: webtable not found..");
+		}
+		return size;
+	}
+
+	// Get Webtable value from any particular row 
+	public static String getValuesFromWebTable(String tableXpath, int rowNumber)
+	{	
+		StringBuilder sbColumn= new StringBuilder();	 
+		WebElement webtable=driver.findElement(getElement(tableXpath));
+		highLightElement(driver, webtable);
+		// Getting row count		
+		List<WebElement> rows = webtable.findElements(By.tagName("tr"));
+		Print_Util.logDebug("Table Row Size is : "+rows.size());	
+
+		//for (int i=1; i<rows.size();i++) 
+
+		List<WebElement> cells =rows.get(rowNumber).findElements(By.tagName("td"));
+		String appendStringValue="";
+		for(int j=0; j<cells.size();j++)
+		{
+			String actualData =cells.get(j).getText(); // getting 1st row j column value
+			highLightElement(driver, cells.get(j));
+			appendStringValue =sbColumn.append(actualData).append("##").toString();
+		}
+
+		Print_Util.logMessage("UI webTable value from rownumber " +rowNumber+ " is :: "+appendStringValue);
+		return appendStringValue;		
+	}
+
+	// Get Webtable value from any particular row 
+	public static String getCSVValuesFromWebTable(String tableXpath, int rowNumber)
+	{	
+		StringBuilder sbColumn= new StringBuilder();	 
+		WebElement webtable=driver.findElement(getElement(tableXpath));
+		highLightElement(driver, webtable);
+		// Getting row count		
+		List<WebElement> rows = webtable.findElements(By.tagName("tr"));
+		Print_Util.logDebug("Table Row Size is : "+rows.size());	
+
+		//for (int i=1; i<rows.size();i++) 
+
+		List<WebElement> cells =rows.get(rowNumber).findElements(By.tagName("td"));
+		String appendStringValue="";
+		for(int j=0; j<cells.size();j++)
+		{
+			String actualData =cells.get(j).getText(); // getting 1st row j column value
+			highLightElement(driver, cells.get(j));
+			appendStringValue =sbColumn.append(actualData).append(",").toString();
+		}
+
+		Print_Util.logMessage("UI webTable value from rownumber " +rowNumber+ " is :: "+appendStringValue);
+		return appendStringValue;		
+	}
+
+	// Get DB values from Database  need change
+	//	public static String getvaluesFromDB(String DB_URL, String DB_Username, String DB_Password, int columnCount ,String SqlQuery, int getDBValuefromRowNumber) throws Exception
+	//	{
+	//
+	//		Class.forName("oracle.jdbc.driver.OracleDriver");
+	//		// Get connection to DB
+	//		boolean isTestRunningInIPM = (IPMcomm.importParam("ENGINE") != null&& !IPMcomm.importParam("ENGINE").isEmpty() && IPMcomm.importParam("ENGINE").equals("IPM"));
+	//		if (!isTestRunningInIPM) {
+	//			PasswordEncrypt.decrypt(DB_Password);
+	//		} else {
+	//			PasswordEncrypt.decrypt(DB_Password);
+	//		}		 
+	//
+	//		con = DriverManager.getConnection(DB_URL, DB_Username, "");
+	//		// Statement object to send the SQL statement to the Database
+	//		Statement stmt = con.createStatement();
+	//		ResultSet res = stmt.executeQuery(SqlQuery);
+	//		int count=columnCount;
+	//		StringBuilder sb =null;
+	//
+	//		int j=1;
+	//		while (res.next()) 
+	//		{				 
+	//			sb  =new StringBuilder();
+	//			String appendstring ="";
+	//
+	//			for( int i=1;i<=count;i++)
+	//			{
+	//				Object DBdata =res.getObject(i);
+	//				appendstring= sb.append(DBdata).append("##").toString(); 	
+	//			}		
+	//			hashTable.put(j, appendstring.toString());
+	//			j++;
+	//		} 		
+	//		Print_Util.logError("DB value :: "+hashTable.get(getDBValuefromRowNumber).toString());
+	//		IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT,"DB value :: "+hashTable.get(getDBValuefromRowNumber).toString());
+	//		return hashTable.get(getDBValuefromRowNumber).toString() ;
+	//	}	 
+
+	// to compare UI values with DB values 
+	public static boolean verifyUIValuesWithDB(String DbDatas, String UIDatas)
+	{		
+		boolean value =true;
+		int DBLength=DbDatas.split("##").length;
+		int UILength=UIDatas.split("##").length;
+		List<String> DB =new ArrayList<String>();
+		List<String> UI =new ArrayList<String>();
+
+		// Clearing DB list & Storing values
+		DB.clear();
+		for(int i=0; i<DBLength;i++)
+		{
+			String DBValue=DbDatas.split("##")[i]; 
+			DB.add(DBValue);
+		}
+
+		// Clearing UI list & Storing values
+		UI.clear();
+		for(int j=0;j<UILength;j++)
+		{
+			String UIValue=UIDatas.split("##")[j]; 
+			UI.add(UIValue);
+		}	
+		// Comparing DB values present in UI or not 
+		for(int k=0;k<DBLength;k++)
+		{
+			String actualDbdata=DB.get(k).toString();
+			if(UI.toString().contains(actualDbdata))
+			{
+				Print_Util.logMessage("UI values Matched with DB values");
+				IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.PASSED,"UI values Matched with DB values");		 
+			}else
+			{
+				Print_Util.logMessage("UI values Not Matched with DB values");
+				IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.FAILED,"UI values Not Matched with DB values");	
+				value=false;
+			}
+		}
+		return value;
+	}
+
+	// Function to click download link & save file in Downloads using AutoIt Script.
+
+	public static String clickAndSaveFileIE(WebElement element) throws Exception
+	{
+		String excelFileName="";
+
+		String directory="C:\\ipmqc";
+		//String directory=System.getProperty("user.home")+"\\Downloads";
+		try {
+			// Deleting existing files
+			Print_Util.logError("Calling DeleteAllFilesFromDirectory() function to detele existing files from path # "+ directory);    		
+			//OnePlan_Util.DeleteAllFilesFromDirectory(directory);
+			// clicking link to download
+			Print_Util.logMessage("click link to download file is displayed "+element.isDisplayed());
+			highLightElement(driver, element);
+			Actions act =new Actions(driver);
+			act.doubleClick(element).perform();
+			Print_Util.logError("Download link clicked & waiting for popup..! ");
+			waitFor();
+			Print_Util.logError("IE browser download popup visible and handling with Autoit Scripts...! ");
+			IPMcomm.logMessage(IPMcomm.TEST_CASE, IPMcomm.DEBUG_PRINT,"IE browser download popup visible and handling with Autoit Scripts...! ");
+			// Autoit EXE Called...
+			//Runtime.getRuntime().exec(OnePlan_Util.getDataFromIPMOrProp(ApplPropFilePath,"IEDownloadHandleExe"));
+			Thread.sleep(22000);
+			// readTextFile();
+			Print_Util.logError("Autoit Script end...");
+			IPMcomm.logMessage(IPMcomm.TEST_CASE, IPMcomm.DEBUG_PRINT,"Autoit Script end...");
+			Print_Util.logError("Getting Driver instance :: "+driver.toString());
+
+			Print_Util.logError("Calling getAbsolutePathOfDownloadedFile() method :: getting excel file name from path # "+ directory);
+			// excelFileName = OnePlan_Util.getAbsolutePathOfDownloadedFile(directory);	    		
+		} 
+		catch (Exception e)
+		{
+			System.out.println(e.getMessage());
+			IPMcomm.logMessage(IPMcomm.TEST_CASE, IPMcomm.DEBUG_PRINT,"IE browser Download popUp is not handled... ");
+		}
+		return excelFileName;    
+	}
+
+
+
+	public static void DeleteFilesFromDirectory(String path , String FileName) throws Exception 
+	{
+		File file = new File(path);
+		System.out.println("Deleting the previous exported excel from  the ::" + path);
+		String[] myFiles;    
+		if(file.isDirectory())
+		{
+			myFiles = file.list();
+			for (int i=0; i<myFiles.length; i++) 
+			{
+				File myFile = new File(file, myFiles[i]); 
+
+				String actualPath=path+"\\"+FileName;
+				String expectedpath= myFile.getAbsolutePath();
+
+				if(actualPath.equals(expectedpath))
+				{
+					System.out.println("expectedpath :: "+expectedpath);
+					System.out.println("actualPath   ::"+actualPath);
+					myFile.delete();
+					waitFor(1000);
+					Print_Util.logMessage(myFile.getName()+" is deleted...!");
+					break;
+
+				}else
+				{
+					//Print_Util.logDebug("No file is deleted");
+				}	
+			}
+		}	
+	}
+
+	public static void DeleteFilesFromDirectory(String path) throws Exception 
+	{
+		Thread.sleep(2000);
+		File file = new File(path);
+		file.delete();
+		Print_Util.logMessage(path +" :: File deleted successfully");
+	} 
+
+
+	public static File getLatestFilefromDirectory()
+	{
+		String home = System.getProperty("user.home");
+		String dirPath=home+"/Downloads/";
+
+		File dir = new File(dirPath);
+		File[] files = dir.listFiles();
+		if (files == null || files.length == 0)
+		{
+			return null;
+		}
+
+		File lastModifiedFile = files[0];
+		for (int i = 1; i < files.length; i++) 
+		{
+			if (lastModifiedFile.lastModified() < files[i].lastModified()) {
+				lastModifiedFile = files[i];
+			}
+		}
+		return lastModifiedFile;
+	}
+
+
+	public static void DeleteFilesFromDirectory(String path , String FileName , int k) throws Exception 
+	{
+		File file = new File(path);
+		System.out.println("Deleting the previous exported excel from  the ::" + path);
+		String[] myFiles;    
+		if(file.isDirectory())
+		{
+			myFiles = file.list();
+			for (int i=0; i<myFiles.length; i++) 
+			{
+				File myFile = new File(file, myFiles[i]); 
+				String expectedpath= myFile.getAbsolutePath();
+				String actualPath=path+"\\"+FileName;
+
+				System.out.println(expectedpath);
+				System.err.println(actualPath);
+				if(actualPath.equals(expectedpath))
+				{
+					myFile.delete();
+					waitFor(3500);
+					Print_Util.logMessage(myFile.getName()+" is deleted...!");
+					break;
+
+				}else
+				{
+					Print_Util.logDebug("No file is deleted");
+				}	
+			}
+		}	
+	}
+
+	public static String getAbsolutePathOfDownloadedFile(String path) 
+	{
+		String FileName="C:\\ipmqc\\ExportReport.xls";
+		//		File file = new File(path);
+		//		System.out.println("Inside.... "+ path);
+		//		IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT,"Inside.... "+ path );
+		//		String[] myFiles;    
+		//		if(file.isDirectory())
+		//		{
+		//			myFiles = file.list();
+		//			for (int i=0; i<myFiles.length; i++) 
+		//			{
+		//				File myFile = new File(file, myFiles[i]);   
+		//				FileName=myFile.getAbsolutePath();
+		//				if(FileName.equals("C:\\ipmqc\\ExportReport.xls"))
+		//				{
+		//					System.out.println("FileName is : " +FileName );
+		//					IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT,"FileName is : " +FileName );
+		//					return FileName;
+		//				}
+		//				
+		//			}
+		//		}else
+		//		{
+		//			System.out.println("File name cant fetched..! :-(");	
+		//			
+		//		}
+		return FileName;
+	}
+
+	// Function to verify Excel data with UI Value	 
+	@SuppressWarnings("resource")
+	public static boolean compareExcelValueWithGUIData(String GUIData, String Excelpath, int rowNo) throws IOException  
+	{
+		GlobalConstants.booleanValue=true;
+
+		// get UI Data using getValuesFromWebTable(); 
+		File file = new File(Excelpath);
+		Print_Util.logMessage("reading data from Excel File ----> "+Excelpath);
+		FileInputStream fis=null;
+		try {
+			fis = new FileInputStream(file);
+		} catch (FileNotFoundException e1) {
+			Print_Util.logError("Excel File Not Found in path::::::>>>>"+ Excelpath);
+			Print_Util.logError(e1.getMessage());
+		}
+		HSSFWorkbook wb = new HSSFWorkbook(fis);
+		HSSFSheet sh =wb.getSheetAt(0);
+
+		// get column count for provided row number 
+		int cellCount=sh.getRow(rowNo).getLastCellNum();
+
+		StringBuilder sb1= new StringBuilder();
+		String Excelappendvalue = "" ;
+		for(int i=0;i<cellCount;i++)
+		{
+
+			Object getData="";
+			try {
+				getData = sh.getRow(rowNo).getCell(i).getStringCellValue();
+				//Print_Util.logError("Excel data :"+getData);
+			} catch (Exception e) {
+				getData = sh.getRow(rowNo).getCell(i).getNumericCellValue();
+				//Print_Util.logError("Excel data :"+getData);
+			}
+			Excelappendvalue =sb1.append(getData).append("##").toString();
+
+		}
+		Print_Util.logDebug("Read Data from excel file row number "+rowNo+ " is : "+Excelappendvalue);
+
+		Print_Util.logDebug("Provided Data from GUI is : "+GUIData);
+
+		// String UI & Excel Data in List & Comparing values 
+
+		int ExcelDataLength=Excelappendvalue.split("##").length;
+		int GUILength=GUIData.split("##").length;
+
+		List<String> ExcelData =new ArrayList<String>();
+		List<String> GUI =new ArrayList<String>();
+
+		// Clearing DB list & Storing values
+		ExcelData.clear();
+		for(int i=0; i<ExcelDataLength;i++)
+		{
+			String ExcelValue=Excelappendvalue.split("##")[i]; 
+			ExcelData.add(ExcelValue);
+		}
+
+		// Clearing UI list & Storing values
+		GUI.clear();
+		for(int j=0;j<GUILength;j++)
+		{
+			String UIValue=GUIData.split("##")[j]; 
+			GUI.add(UIValue);
+		}	
+		// Comparing DB values present in UI or not 
+		//for(int k=0;k<=ExcelDataLength;k++) // chnaged to validate only 4 values from excel file 
+		for(int k=0;k<=4;k++)
+		{
+			String actualGUIdata=GUI.get(k).toString();
+			//String actualUIdata=GUI.get(k).toString();
+
+			if(actualGUIdata.isEmpty()||actualGUIdata.equals(""))
+			{
+				//System.out.println("actualExceldata is empty");
+			}else
+			{
+				System.out.println("ExcelData"+ExcelData);
+				System.out.println("GUI Data"+actualGUIdata);
+				if(ExcelData.contains(actualGUIdata))
+				{
+					Print_Util.logMessage("Excel List Contains GUI value ="+ actualGUIdata);
+					GlobalConstants.booleanValue=true;
+					break;
+				}else
+				{
+					Print_Util.logError("Excel List does not Contain GUI value ="+ actualGUIdata);
+					GlobalConstants.booleanValue=false;
+				}
+			}
+		}
+		return GlobalConstants.booleanValue;
+
+	}
+
+	// Compere excel Cell color code 
+
+	public static boolean VerifyExcelCellColor(String ExcelPath, int expectedColorCode , int rowNo , int cellNo) throws Exception 
+	{
+		boolean value;
+		File file = new File(ExcelPath);
+		FileInputStream fis = new FileInputStream(file);
+		@SuppressWarnings("resource")
+		HSSFWorkbook wb = new HSSFWorkbook(fis);
+		HSSFSheet sh = wb.getSheetAt(0);
+
+		// gettext
+		String text="";
+		text = sh.getRow(rowNo).getCell(cellNo).getStringCellValue();
+		Print_Util.logDebug("Requested Excel Cell Data is :: " + text);
+
+		//get color code
+		HSSFCellStyle cellcolor = sh.getRow(rowNo).getCell(cellNo).getCellStyle();  
+		int actualColorCode = cellcolor.getFillBackgroundColor();
+		Print_Util.logDebug("Actual Excel cell colorCode is :: " +actualColorCode);
+
+		if(actualColorCode== expectedColorCode)
+		{
+			Print_Util.logMessage("In Excel, colorCode "+expectedColorCode+"  is found.. ");
+			value=true;
+		}else
+		{
+			Print_Util.logMessage("In Excel, colorCode "+expectedColorCode+"  is not found.. ");
+			value=false;
+		}
+		return value;
+
+	}
+
+	//Compare CSV data File with GUI Data 
+
+	public static String getDataFromCSVFile(String csvFileName) throws IOException {
+		String csvText=null;
+		try {
+			if (!csvFileName.isEmpty() || csvFileName != null) 
+			{
+				String filePath = csvFileName;
+
+				File file = new File(filePath);
+				if (file.exists()) {
+					Print_Util.logMessage("File found :" + csvFileName);
+
+					FileReader fr = new FileReader(file);
+					@SuppressWarnings("resource")
+					LineNumberReader linenumberreader = new LineNumberReader(fr);
+					//To Skip first line
+					linenumberreader.readLine();				
+					if ((csvText = linenumberreader.readLine()) != null) 
+					{
+						for (int i = 0; i < csvText.length(); i++)
+						{
+							Print_Util.logMessage(csvText);
+							if(csvText!=null)
+							{
+								break;
+							}
+						}
+					}					
+
+				} else {
+					Print_Util.logError("File does not exists");
+					ResultClass.testStatus(false);
+				}
+			}
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}			
+		return csvText;
+	}
+
+	public static WebElement findelement(String locatorWithValue)
+	{
+		element=driver.findElement(getElement(locatorWithValue));
+		highLightElement(driver, element);
+		Print_Util.logMessage("element found with given locatorWithValue :: " + locatorWithValue) ;
+		
+
+		return element;
+
+	}
+
+	public static List<WebElement> getOptions(String locatorWithValue)
+	{
+		element=driver.findElement(getElement("locatorWithValue"));
+		highLightElement(driver, element);
+
+		Select st = new Select(element);
+		ListofElements = st.getOptions();
+		return ListofElements;
+
+	}
+
+	public static String getFirstSelectedOption(String locatorWithValue)
+	{
+		String selectedValue="";
+			element=driver.findElement(getElement(locatorWithValue));
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver, element);
+			Select St =new Select(element);
+			element=St.getFirstSelectedOption();
+			selectedValue=element.getText().toString();
+			Print_Util.logMessage("SelectedValue from DropDown is :: "+selectedValue );
+
+		return selectedValue;
+	}
+
+	public static boolean isElementVisible(String locatorWithValue)
+	{
+		GlobalConstants.booleanValue=true;
+		Print_Util.logMessage("Inside isElementVisible method ");
+			element=driver.findElement(getElement(locatorWithValue));
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver, element);
+			WebDriverUtil.waitForPageLoaded(driver);
+
+			if(element.isDisplayed()&&element!=null)
+			{
+				Print_Util.logMessage("isElementVisible value is :: true"  );
+
+			}else
+			{
+				Print_Util.logError("isElementVisible value is :: False"  );
+				GlobalConstants.booleanValue=false;
+			}
+		return GlobalConstants.booleanValue;
+	}
+
+	public static void IE_killProcessFromTaskManager() throws Exception
+	{
+		// Used to Kill IEDriverServer exe from Window Task manager.
+
+		final String KILL = "taskkill /IM ";
+		String processName = "IEDriverServer.exe"; //IE process
+		Runtime.getRuntime().exec(KILL + processName); 
+		waitFor(3000); //Allow OS to kill the process
+		Print_Util.logMessage("Killed :: IE_killProcessFromTaskManager ");
+	} 
+
+	public static void scrollElementIntoView(WebElement Element) throws Exception
+	{
+		// used to scroll the element into view 
+		((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", Element);
+		highLightElement(driver, Element);
+		waitFor(500);
+	}
+
+	// Function to select the check box value
+
+	public void SelectCheckboxValue(String locatorWithValue)
+	{	
+			element= driver.findElement(getElement(locatorWithValue));
+			webdriverWaitUntillVisibilityOfElement(element);
+			highLightElement(driver, element);
+			element.click();
+			Print_Util.logMessage("Checkbox clicked");
+	}
+
+	// Method to Read data from sheet
+
+	// Sample Data account_cd##1A@@fttp_flag##Y@@material##1234@@ipid##1545
+	public static HashMap<String, String> readData(String data) {
+		try{
+			Print_Util.logDebug("sPageData:::" + data); 
+			hashMap = new HashMap<String,String>();   //added by meenakshi so that the hash map variable do not hold the previous value
+			if (data.contains("@")) {
+				String[] DataList = data.split("@@");
+				// System.out.println(DataList[0]+" "+DataList[1]);
+				// Print_Util.logMessage("DataList" + DataList.length);
+
+				for (int i = 0; i < DataList.length; i++) {
+
+					String[] DataSecond = DataList[i].split("##");
+
+					hashMap.put(DataSecond[0], DataSecond[1]);
+					// Print_Util.logMessage("DataSecond[0],
+					// DataSecond[1]"+DataSecond[0]+" "+ DataSecond[1]);
+				}
+				/*
+				 * Iterator<String> keyIterator = hm.keySet().iterator();
+				 * Iterator<String> valueIterator = hm.values().iterator();
+				 * 
+				 * while (keyIterator.hasNext()) { Print_Util.logMessage("key: " +
+				 * keyIterator.next()); }
+				 * 
+				 * while (valueIterator.hasNext()) { Print_Util.logMessage("value: " +
+				 * valueIterator.next()); }
+				 */
+			} else {
+				String[] DataSecond = data.split("##");
+
+				hashMap.put(DataSecond[0], DataSecond[1]);
+				// Print_Util.tc_debug("DataSecond[0], DataSecond[1]"+DataSecond[0]+"
+				// "+ DataSecond[1]);
+
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return hashMap;
+
+	}
+
+	public static void closeChildWindow()
+	{
+		Print_Util.logDebug("Closing Child Window and Switching to Parent Window");
+
+		
+		String ChildWindow=GlobalConstants.driver.getWindowHandle();
+			if(!ParentWindow.equals(ChildWindow))
+
+			{
+				GlobalConstants.driver.close();
+				Print_Util.logMessage("Child Window Closed" + ChildWindow);
+				GlobalConstants.driver.switchTo().window(GlobalConstants.ParentWindow);
+				int parentcount=GlobalConstants.driver.getWindowHandles().size();
+				Print_Util.logDebug("parentcount :: Window count after closing child window is :: "+ parentcount);
+			}
+	}
+
+	public static String getPropValuesFromFile(String filePath, String key1) 
+	{
+		String Value="";
+		propertiesFileUtils.setPropertyPath(filePath);
+		try {
+			Value = propertiesFileUtils.getProp(key1).trim();
+		} catch (Exception e) 
+		{
+		Print_Util.logError("getPropValuesFromFile :: unable to find key in hashmap :: "+key1);
+		}
+		//System.out.println("getDataFromIPMOrProp :: Key --> "+key1 +" ## "+ "Value --->" +Value);
+		return Value;
+	}
+
+	public static String getDataFromIPMOrProp(String FilePath, String key)
+	{
+		String Value="";
+		propertiesFileUtils.setPropertyPath(FilePath);
+		Value = propertiesFileUtils.getProp(key).trim();
+
+		System.out.println("getDataFromIPMOrProp :: ["+key+" ## "+ Value+"]");
+		return Value;
+	}
+
+	public static  String generateRandomNumber(int charLength)
+	{
+		return String.valueOf(charLength < 1 ? 0 : new Random()
+		.nextInt((9 * (int) Math.pow(10, charLength - 1)) - 1)
+		+ (int) Math.pow(10, charLength - 1));
+	}
+
+	public static  String generateRandomString(int charLength)
+	{
+		String generatedString = RandomStringUtils.randomAlphabetic(charLength);
+		return generatedString;
+	}
+
+	public static String getCurrentDate()
+	{
+
+		//Get Current Date - as - todays date  09/13/2016
+		DateFormat df=new SimpleDateFormat("MM/dd/yyyy HH:mm");
+		Date date = new Date();
+		String CurrentDate=df.format(date);
+		//System.err.println("Current Date is :: "+CurrentDate);
+		return CurrentDate;
+	}
+
+	public static String getLastDate()
+	{	
+		DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+		// Create a calendar object with today date. Calendar is in java.util pakage.
+		Calendar calendar = Calendar.getInstance();
+		// Move calendar to yesterday
+		calendar.add(Calendar.DATE, -1);
+		// Get current date of calendar which point to the yesterday now
+		Date yesterday = calendar.getTime();
+		String lastDate=dateFormat.format(yesterday).toString();
+		System.err.println("Yesterday's Date is :: "+lastDate);
+		return lastDate;
+	}
+
+	public static void loadObjects() throws FileNotFoundException, IOException{
+		prop = new Properties();
+		prop.load(new FileInputStream(new File("./src/ObjectRepo/Application.properties")));
+		System.out.println(prop.keySet());
+
+	}
+
+	public static void loadObjects(String propertyFilePath) throws FileNotFoundException, IOException{
+		prop = new Properties();
+		prop.load(new FileInputStream(new File(propertyFilePath)));
+		System.out.println(prop.keySet());
+
+	}
+
+	// Wait for window 
+
+	public static void clickLinkandWaitforWindowToSwitch(WebElement element) throws InterruptedException
+	{
+		String parentWin=GlobalConstants.driver.getWindowHandle();
+		webdriverWaitUntillVisibilityOfElement(element);
+		element.click();
+		int winSize;
+		do 
+		{
+			winSize= GlobalConstants.driver.getWindowHandles().size();
+
+		}
+		while ( winSize != 2);
+		{
+			Set<String> windows = driver.getWindowHandles();
+			for (String win : windows)
+			{
+
+				if(!win.equals(parentWin))
+				{
+					GlobalConstants.driver.switchTo().window(win);
+					System.out.println("Driver switched to child window :: "+ win.toString());
+				}
+
+			}
+		}
+	}
+
+	public static Boolean getElementAttribute(String locatorWithValue)
+	{
+		booleanValue =true;
+		try 
+		{
+			booleanValue=driver.findElement(getElement(locatorWithValue)).getAttribute("value").isEmpty();
+			webdriverWaitUntillVisibilityOfElement(element); 
+			Print_Util.logMessage("getElementAttribute :: value is null in textbox ");
+
+		} catch (NoSuchElementException e) {
+			booleanValue = false;
+			Print_Util.logError("The element with Name : "+locatorWithValue+" Could not be found");
+		}
+		return booleanValue;
+	}
+
+	public static void HandleCancleButtonInIEPopup() throws Exception
+	{
+		Robot rt = new Robot();
+		rt.keyPress(KeyEvent.VK_ALT);
+		rt.keyPress(KeyEvent.VK_N);
+		rt.keyRelease(KeyEvent.VK_ALT);
+		rt.keyRelease(KeyEvent.VK_N);
+		Thread.sleep(1000);	
+
+		rt.keyPress(KeyEvent.VK_TAB);
+		rt.keyRelease(KeyEvent.VK_TAB);
+		Thread.sleep(1000);
+
+		rt.keyPress(KeyEvent.VK_TAB);
+		rt.keyRelease(KeyEvent.VK_TAB);
+		Thread.sleep(1000);
+
+		rt.keyPress(KeyEvent.VK_ENTER);
+		rt.keyRelease(KeyEvent.VK_ENTER);
+		Thread.sleep(1000);
+		Print_Util.logDebug("Cancel button is clicked in IE Download popup successfully....");
+	}	
+	public static RemoteWebDriver getDriver()
+	{
+		System.out.println("getDriver() ="+GlobalConstants.driver1.get());
+		return GlobalConstants.driver1.get();
+	}
+
+	//Select Radio Button based on Attribute Value
+
+	public static void selectRadioBtn(String locatorWithValue, String value)
+	{		
+		List<WebElement> getAllRadioBtn=driver.findElements(getElement(locatorWithValue));
+
+		int rdaioSize=getAllRadioBtn.size();
+
+		for(int radioIndex=0;radioIndex < rdaioSize;radioIndex++)
+		{
+			String actValue = getAllRadioBtn.get(radioIndex).getAttribute("value");
+
+			if (actValue.equalsIgnoreCase(value))
+			{				 
+				getAllRadioBtn.get(radioIndex).click();
+				break;
+			}
+		}
+		try 
+		{			
+			Print_Util.logMessage("Element selected with selectByValue : "+value);
+		}
+		catch (ElementNotVisibleException ex) 
+		{
+			Print_Util.logError("Element not selected with selectByValue : "+value);
+		}
+	}
+
+	//Zoom In and Out function / Method
+	public static void ZoomIn()
+	{
+		
+			new Actions(driver).sendKeys(Keys.CONTROL).sendKeys(Keys.ADD).build().perform();
+			Print_Util.logMessage("Verifing Zoom In");
+			WebDriverUtil.waitForPageLoaded(driver);
+	}
+
+	public static void ZoomOut()
+	{
+		try{
+			new Actions(driver).sendKeys(Keys.CONTROL).sendKeys(Keys.SUBTRACT).build().perform();
+			Print_Util.logMessage("Verifing Zoom Out");
+			WebDriverUtil.waitForPageLoaded(driver);
+		}catch(Exception e)
+		{
+			Print_Util.logError("Exception @ ZoomOut");
+		}
+	}
+
+	//CheckBox
+	public static void checkBox(String locateWithValue)
+	{
+		
+			if (!driver.findElement(getElement(locateWithValue)).isSelected())
+			{
+				driver.findElement(getElement(locateWithValue)).click();
+				Print_Util.logMessage("Element checked with locatorWithvalue");
+			}
+	}
+
+	public static  String generateRandomStringNumber(int charLength)
+	{
+		String generatedString = RandomStringUtils.randomAlphanumeric(charLength);
+		return generatedString;
+	}
+
+
+	public static void selectCurrentCalenderDate(String locatorWithvalue)
+	{
+			DateFormat dateFormat2 = new SimpleDateFormat("dd"); 
+			Date date2 = new Date();
+			String today = dateFormat2.format(date2);
+			//find the calendar
+			element=driver.findElement(getElement(locatorWithvalue));             
+			ListofElements=element.findElements(By.tagName("td"));  
+
+			//comparing the text of cell with today's date and clicking it.
+			for (WebElement cell : ListofElements)
+			{
+				if (cell.getText().equals(today))
+				{
+					cell.click();
+					break;
+				}
+			}
+	}
+
+	public static void verifyTextFieldEmpty(String eleTxtfield)
+	{	
+			WebDriverGenerics.getElementAttribute(eleTxtfield);
+			WebDriverUtil.waitForPageLoaded(driver);
+	}
+	
+	public static void clearCookies() throws Exception
+   	{
+   		String val ="Yes";
+   		if(val.equals("Yes"))
+   		{
+   			//Clearing all Cookies and temp files
+   			String batchFile1 = System.getProperty("user.dir")+"/ClearCookies.bat";
+   			try {
+		 				Runtime.getRuntime().exec("cmd.exe /c start "+batchFile1);
+   			} catch (IOException e)
+   			{
+   				Print_Util.logError("clearCookies Exception....");
+   			}
+   		}
+	}
+
+	public static void catchBlockStatus() throws IOException
+	{
+		ResultClass.testStatus(true);
+	}
+	
+
+	public static void CheckElementState(WebElement element,String State) throws IOException
+	{
+		String StrAttributeState= "";
+		if(State != null)
+		{
+			if(State.equalsIgnoreCase("disabled"))
+			{
+
+
+				Print_Util.logMessage("Checking State for Disable :");
+				StrAttributeState = element.getAttribute(State);
+				if(State != null)
+				{
+					if(StrAttributeState!=null && StrAttributeState.equalsIgnoreCase("true"))
+
+					{
+						Print_Util.logMessage("element  Disabled");
+						ResultClass.testStatus(true);
+					}
+					else
+					{
+						Print_Util.logMessage("element  Enabled");
+						ResultClass.testStatus(false);
+					}
+				}
+
+			}
+
+			else if(State.equalsIgnoreCase("enabled"))
+			{
+
+				Print_Util.logMessage("Checking State for Enabled :");
+				StrAttributeState = element.getAttribute(State);
+
+				if(StrAttributeState == null)
+				{
+
+					Print_Util.logMessage("element enabled");
+					ResultClass.testStatus(true);
+				}	
+				else
+				{
+					Print_Util.logMessage("element  Disabled");
+					ResultClass.testStatus(false);
+				}
+			}
+
+
+		}
+	}
+
+	public static boolean SearchinWebTable(String XPATH,List<String> strValue)
+	{
+
+		List<WebElement>eleRows;
+		List<WebElement>eleColumns;
+		List<String>ExpValues = new ArrayList<String>();
+		String strColumnXPATH="";
+		int RowSize=0;
+		int ColumnSize=0;
+		boolean blnStatus = false;
+		try
+		{
+
+			eleRows= driver.findElements(By.xpath(XPATH+"//tr"));
+			RowSize = eleRows.size();
+			for(int iRow = 0; iRow < eleRows.size();iRow++)
+			{
+				int row = iRow+1;
+				strColumnXPATH= "("+XPATH+"//tr)["+row+"]//td";
+				eleColumns = driver.findElements(By.xpath(strColumnXPATH));
+				ColumnSize= eleColumns.size();
+
+				for(int iColumn = 0;iColumn<ColumnSize;iColumn++)
+				{
+					ExpValues.add(eleColumns.get(iColumn).getText());
+				}
+				Collections.sort(ExpValues);
+
+				if(ExpValues.containsAll(strValue))
+				{
+					Print_Util.logMessage("All values found succssfully in Row " + iRow);
+					blnStatus = true;
+					break;
+				}
+
+
+			}
+		}
+		catch(Exception e)
+		{
+			blnStatus = false;
+		}
+		return blnStatus;
+	}
+
+
+	public static int SearchinWebTableandReturnRownumber(String XPATH,List<String> strValue)
+	{
+
+		List<WebElement>eleRows;
+		List<WebElement>eleColumns;
+		List<String>ExpValues = new ArrayList<String>();
+		String strColumnXPATH="";
+		int RowSize=0;
+		int ColumnSize=0;
+		int RowNumber=0;
+		boolean blnStatus = false;
+		try
+		{
+
+			eleRows= driver.findElements(By.xpath(XPATH+"//tr"));
+			RowSize = eleRows.size();
+			for(int iRow = 0; iRow < eleRows.size();iRow++)
+			{
+				int row = iRow+1;
+				strColumnXPATH= "("+XPATH+"//tr)["+row+"]//td";
+				eleColumns = driver.findElements(By.xpath(strColumnXPATH));
+				ColumnSize= eleColumns.size();
+
+				for(int iColumn = 0;iColumn<ColumnSize;iColumn++)
+				{
+					ExpValues.add(eleColumns.get(iColumn).getText());
+				}
+
+				if(ExpValues.containsAll(strValue))
+				{
+					Print_Util.logMessage("All values found succssfully in Row " + iRow);
+					RowNumber= iRow;
+					break;
+				}
+				else
+				{
+					ExpValues.clear();
+				}
+			}
+		}
+		catch(Exception e)
+		{
+		}
+		return RowNumber+1;
+	}
+	public static void CompareTwoDropDowns(WebElement dropdown1,WebElement dropdown2)
+	{
+		Select objDP1 = new Select(dropdown1);
+		Select objDP2 = new Select(dropdown2);
+		List<WebElement>objDP1Options = objDP1.getOptions();
+		List<WebElement>objDP2Options = objDP2.getOptions();
+		int Flag=0;
+		if(objDP1Options.size() >= objDP2Options.size())
+		{
+			for(WebElement DP1ele : objDP1Options)
+			{
+				for(WebElement DP2ele : objDP2Options)
+				{
+					if(DP1ele.getText().trim().equalsIgnoreCase(DP2ele.getText().trim()))
+					{
+						Flag++;
+						break;
+
+					}
+
+				}
+				if(Flag > 0)
+				{
+					Print_Util.logMessage("DP1 option "+DP1ele.getText().trim() + " found in DP2" );
+				}
+				else
+				{
+					Print_Util.logMessage("DP1 option "+DP1ele.getText().trim() + " not found in DP2" );
+				}
+				Flag=0;
+			}
+		}
+		if(objDP2Options.size() > objDP1Options.size())
+		{
+			for(WebElement DP2ele : objDP2Options)
+			{
+				for(WebElement DP1ele : objDP1Options)
+				{
+					if(DP2ele.getText().trim().equalsIgnoreCase(DP1ele.getText().trim()))
+					{
+						Flag++;
+						break;
+					}
+
+				}
+				if(Flag > 0)
+				{
+					Print_Util.logMessage("DP2 option "+DP2ele.getText().trim() + " found in DP2" );
+				}
+				else
+				{
+					Print_Util.logMessage("DP2 option "+DP2ele.getText().trim() + " not found in DP2" );
+				}
+			}
+		}
+
+	}
+	
+	
+}
