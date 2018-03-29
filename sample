@@ -2336,3 +2336,5468 @@ public class WebDriverGenerics extends GlobalConstants
 	
 	
 }
+package common;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.openqa.selenium.Alert;
+import org.openqa.selenium.By;
+import org.openqa.selenium.ElementNotVisibleException;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.NoAlertPresentException;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.UnhandledAlertException;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.ie.InternetExplorerDriver;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.FluentWait;
+import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.support.ui.Wait;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+final public class WebDriverUtil {
+	
+	public  property mapfileLogin=new property(System.getProperty("user.dir")+"//src//objectrepository//loginpage.properties");
+	public  property mapHomePage=new property(System.getProperty("user.dir")+"//src//objectrepository//VplanVoipHomePage.properties");
+	public  property DPmapHomePage=new property(System.getProperty("user.dir")+"//src//objectrepository//VplanDPHomePage.properties");
+
+	private Method method;
+
+	public static synchronized WebElement checkElementExists(final WebDriver driver, final String xpath) {
+		System.out.println();
+		try {
+
+			WebElement web = waitforElement(driver, xpath, 15, 2);
+			if (!(web.isDisplayed() & web.isEnabled()))
+				web = waitforElement(driver, xpath, 15, 2);
+			if ((web.isDisplayed() & web.isEnabled())) {
+				System.out.println("Element is clickable  :" + xpath);
+			}
+			return web;
+		} catch (NoSuchElementException e) {
+			System.out.println(" NoSuchElementException :" + e.getMessage());
+			System.out.println(e.fillInStackTrace());
+		} catch (Exception e) {
+			System.out.println(" NoSuchElementException :" + e.getMessage());
+			System.out.println(e.fillInStackTrace());
+		}
+		return null;
+	}
+
+	public synchronized WebElement checkElementExists1(final WebDriver driver, final String xpath) {
+		try {
+			System.out.println(" checking element is exists with xpath :" + xpath);
+			return waitforElement1(driver, xpath, 15, 2);
+			// return driver.findElement(By.xpath(xpath));
+		} catch (NoSuchElementException e) {
+			System.out.println(" NoSuchElementException :" + e.getMessage());
+			System.out.println(e.fillInStackTrace());
+		} catch (Exception e) {
+			System.out.println(" NoSuchElementException :" + e.getMessage());
+			System.out.println(e.fillInStackTrace());
+		}
+		return null;
+	}
+
+	/**
+	 * 
+	 * @param driver
+	 * @param element
+	 * @return
+	 */
+	public static String getElementXPath(WebDriver driver, WebElement element) {
+
+		String javaScript = "function getElementXPath(elt){" + "var path = \"\";"
+				+ "for (; elt && elt.nodeType == 1; elt = elt.parentNode){" + "idx = getElementIdx(elt);"
+				+ "xname = elt.tagName;" + "if (idx > 1){" + "xname += \"[\" + idx + \"]\";" + "}"
+				+ "path = \"/\" + xname + path;" + "}" + "return path;" + "}" + "function getElementIdx(elt){"
+				+ "var count = 1;" + "for (var sib = elt.previousSibling; sib ; sib = sib.previousSibling){"
+				+ "if(sib.nodeType == 1 && sib.tagName == elt.tagName){" + "count++;" + "}" + "}" + "return count;"
+				+ "}" + "return getElementXPath(arguments[0]).toLowerCase();";
+
+		return (String) ((JavascriptExecutor) driver).executeScript(javaScript, element);
+
+	}
+
+	public static void waitForJQuery(WebDriver driver) {
+	    (new WebDriverWait(driver, 500)).until(new ExpectedCondition<Boolean>() {
+	        public Boolean apply(WebDriver d) {
+	            JavascriptExecutor js = (JavascriptExecutor) d;
+	            return (Boolean) js.executeScript("return !!window.jQuery && window.jQuery.active == 0");
+	        }
+	    });
+	}
+	/**
+	 * 
+	 * @param webdriver
+	 * @throws IOException 
+	 */
+	public static void waitForPageLoaded(WebDriver driver)  {
+		ExpectedCondition<Boolean> expectation = new ExpectedCondition<Boolean>()
+				{
+			public Boolean apply(WebDriver driver) 
+			{
+				sleep(2000l);
+				Boolean flg = ((JavascriptExecutor) driver).executeScript("return document.readyState")
+						.equals("complete");
+				return flg;
+			}
+		};
+
+		Wait<WebDriver> wait = new WebDriverWait(driver, 300);
+		try
+		{
+			wait.until(expectation);
+		}
+		catch (TimeoutException e) 
+		{
+			System.out.println("Time out eaception " + e);
+			System.out.println("Page is not ready !!! time out !!!!");
+			try {
+				ResultClass.testStatus(false);
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
+		catch (UnhandledAlertException e)
+		{	
+		//Print_Util.logDebug("Unhandled Alert Exception handled in waitForPageLoaded method");
+		//WebDriverGenerics.verifyAlertPresent_GetText_Accept("alertText");
+          Print_Util.logMessage("exception occurred one is :-" +e.getMessage());
+			WebDriverGenerics.alertGetText("alertText");
+			WebDriverGenerics.acceptAlert();
+		}
+		catch (Exception e) 
+		{
+          Print_Util.logMessage("exception occurred two is :-" +e.getMessage());
+			e.printStackTrace();
+		}
+	}
+
+	public void waitForPageLoaded1(WebDriver driver) {
+		ExpectedCondition<Boolean> expectation = new ExpectedCondition<Boolean>() {
+			public Boolean apply(WebDriver driver) {
+				sleep(2000l);
+				Boolean flg = ((JavascriptExecutor) driver).executeScript("return document.readyState")
+						.equals("complete");
+				return flg;
+			}
+		};
+
+		Wait<WebDriver> wait = new WebDriverWait(driver, 500);
+		try {
+			wait.until(expectation);
+		} catch (TimeoutException e) {
+			System.out.println("Time out eaception " + e);
+			System.out.println("Page is not ready !!! time out !!!!");
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static WebElement waitUntilElementPresent(final WebDriver driver, final String locator,
+			final int timeoutinseconds, final int pollingenveryseconds) {
+		Wait<WebDriver> wait = new FluentWait<WebDriver>(driver).withTimeout(timeoutinseconds, TimeUnit.SECONDS)
+				.pollingEvery(pollingenveryseconds, TimeUnit.SECONDS).ignoring(NoSuchElementException.class)
+				.ignoring(StaleElementReferenceException.class);
+
+		WebElement foo = wait.until(new com.google.common.base.Function<WebDriver, WebElement>() {
+			public WebElement apply(WebDriver driver) {
+				System.out.println(" Waiting for element:" + locator);
+				WebElement findElement = driver.findElement(By.xpath(locator));
+				if (findElement.isDisplayed() & findElement.isEnabled())
+					return findElement;
+				return findElement;
+			}
+		});
+
+		return foo;
+
+	}
+
+	public WebElement waitUntilElementPresent1(final WebDriver driver, final String locator, final int timeoutinseconds,
+			final int pollingenveryseconds) {
+		Wait<WebDriver> wait = new FluentWait<WebDriver>(driver).withTimeout(timeoutinseconds, TimeUnit.SECONDS)
+				.pollingEvery(pollingenveryseconds, TimeUnit.SECONDS).ignoring(NoSuchElementException.class)
+				.ignoring(StaleElementReferenceException.class);
+
+		WebElement foo = wait.until(new com.google.common.base.Function<WebDriver, WebElement>() {
+			public WebElement apply(WebDriver driver) {
+				System.out.println(" Waiting for element:" + locator);
+				WebElement findElement = driver.findElement(By.xpath(locator));
+				if (findElement.isDisplayed() & findElement.isEnabled())
+					return findElement;
+				return findElement;
+			}
+		});
+
+		return foo;
+
+	}
+
+	public static WebElement waitforElement(final WebDriver driver, final String locator, final int timeoutinseconds,
+			final int pollingenveryseconds) {
+		WebElement element = null;
+		try {
+			element = waitUntilElementPresent(driver, locator, timeoutinseconds, pollingenveryseconds);
+		} catch (Exception e) {
+
+		}
+		return element;
+	}
+
+	public WebElement waitforElement1(final WebDriver driver, final String locator, final int timeoutinseconds,
+			final int pollingenveryseconds) {
+		WebElement element = null;
+		try {
+			element = waitUntilElementPresent1(driver, locator, timeoutinseconds, pollingenveryseconds);
+		} catch (Exception e) {
+
+		}
+		return element;
+	}
+
+	public static WebElement waitUntilElementPresent(final WebDriver driver, final String locator) {
+		Wait<WebDriver> wait = new FluentWait<WebDriver>(driver).withTimeout(30, TimeUnit.SECONDS)
+				.pollingEvery(1, TimeUnit.SECONDS).ignoring(NoSuchElementException.class)
+				.ignoring(StaleElementReferenceException.class);
+
+		WebElement foo = wait.until(new com.google.common.base.Function<WebDriver, WebElement>() {
+			public WebElement apply(WebDriver driver) {
+				System.out.println(" Waiting for element:" + locator);
+				WebElement findElement = driver.findElement(By.xpath(locator));
+				if (findElement.isDisplayed() & findElement.isEnabled())
+					return findElement;
+				return findElement;
+			}
+		});
+
+		return foo;
+
+	}
+
+	public static void checkVisibility(final WebDriver driver, final String xpath) {
+
+	}
+
+	public static void JavascriptExecutor(final WebDriver driver, final String command) {
+		JavascriptExecutor jsx1 = (JavascriptExecutor) driver;
+		jsx1.executeScript(command, "");
+	}
+
+	public static void waitUntilElementIsnotDisplayed(final WebDriver driver, final String locator) {
+		while (true) {
+			try {
+				WebElement findElement = waitUntilElementPresent(driver, locator, 5, 1);
+				if (findElement != null && findElement.isDisplayed()) {
+					System.out.println(" Loading screen continue ");
+					continue;
+				} else {
+					System.out.println("break");
+					break;
+				}
+			} catch (Exception e) {
+				break;
+			}
+		}
+	}
+
+	public static void waitUntilElementIsnotDisplayed1(final WebDriver driver, final String locator) {
+		while (true) {
+			try {
+				WebElement findElement = waitUntilElementPresent(driver, locator, 5, 1);
+				if (findElement != null && findElement.isDisplayed()) {
+					System.out.println(" Loading screen ");
+					System.out.println("continue");
+					continue;
+				} else {
+					System.out.println("break");
+					break;
+				}
+			} catch (Exception e) {
+				break;
+			}
+		}
+	}
+
+	/**
+	 * 
+	 * @param driver
+	 * @param nameAtti
+	 * @param secs
+	 * @return
+	 */
+	/*public static WebElement wait4NamePresent(final WebDriver driver, final String nameAtti, final long secs) {
+		try {
+			return (new WebDriverWait(driver, secs)).until(new ExpectedCondition<WebElement>() {
+				public WebElement apply(WebDriver d) {
+					return d.findElement(By.name(nameAtti));
+				}
+			});
+		} catch (StaleElementReferenceException e) {
+			return (new WebDriverWait(driver, secs)).until(new ExpectedCondition<WebElement>() {
+				public WebElement apply(WebDriver d) {
+					return d.findElement(By.name(nameAtti));
+				}
+			});
+		}
+	}*/
+	/**
+	 * 
+	 * @param driver
+	 * @param id
+	 * @param secs
+	 * @return
+	 */
+	public static WebElement wait4IdPresent(final WebDriver driver, final String id, final long secs) {
+
+		return (new WebDriverWait(driver, secs)).until(new ExpectedCondition<WebElement>() {
+			public WebElement apply(WebDriver d) {
+				return d.findElement(By.id(id));
+			}
+		});
+	}
+
+	/**
+	 * 
+	 * @param driver
+	 * @param xpath
+	 * @param secs
+	 * @return
+	 */
+	public static WebElement wait4XpathPresent(final WebDriver driver, final String xpath, final long secs) {
+
+		WebElement webElement = null;
+		try {
+			webElement = (new WebDriverWait(driver, secs)).until(new ExpectedCondition<WebElement>() {
+				public WebElement apply(WebDriver d) {
+					return d.findElement(By.xpath(xpath));
+				}
+			});
+		} catch (StaleElementReferenceException e) {
+			wait4XpathPresent(driver, xpath, secs);
+		}
+		return webElement;
+	}
+
+	public static boolean wait4XpathPresent(final WebDriver driver, final By by, final long secs) {
+		boolean value =false;
+		try {
+			WebDriverWait wait = new WebDriverWait(driver, secs);
+			wait.until(ExpectedConditions.visibilityOfElementLocated(by));
+			value=true;
+		} catch (StaleElementReferenceException e) {
+			wait4XpathPresent(driver, by, secs);
+			
+		} catch (TimeoutException e1) {
+			System.out.println(
+					"Exception : test : Got time out Exception - so check app behavior again : Xpath : " + by);
+			return false;
+		} catch (Exception e2) {
+			System.out.println(
+					"Exception : test : Got unhandled Exception - so check app behavior again : Xpath : " + by);
+			return false;
+		}
+		return value;
+	}
+
+	/**
+	 * 
+	 * @param driver
+	 * @param xpath
+	 * @param secs
+	 * @return
+	 * @throws Exception 
+	 */
+	public static boolean wait4XpathPresent1(final WebDriver driver, final String xpath, final long secs) throws Exception {
+		@SuppressWarnings("unused")
+		boolean value=false;
+		try {
+			WebDriverWait wait = new WebDriverWait(driver, secs);
+			wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath)));
+			return true;
+		} catch (StaleElementReferenceException e) {
+			System.out.println(
+					"test : Got Stale Element Reference Exception - so starting over : xpath : " + xpath);
+			wait4XpathPresent1(driver, xpath, secs);
+		} catch (TimeoutException e) {
+			System.out.println(
+					"Exception :  : Got time out Exception - so check app behavior again : " + xpath);
+			throw new Exception(
+					"Exception : : Got time out Exception - so check app behavior again : " + xpath);
+			
+			// e.printStackTrace();
+		} catch (Exception e) {
+			System.out.println(
+					"Exception :  : Got unhandled Exception - so check app behavior again : " + xpath);
+			
+			throw new Exception(
+					"Exception  : Got unhandled Exception - so check app behavior again : " + xpath);
+			// e.printStackTrace();
+		}
+		return false;
+	}
+
+	/**
+	 * 
+	 * @param driver
+	 * @param linkText
+	 * @param secs
+	 * @return
+	 */
+	public static WebElement wait4LinkTextPresent(final WebDriver driver, final String linkText, final long secs) {
+
+		return (new WebDriverWait(driver, secs)).until(new ExpectedCondition<WebElement>() {
+			public WebElement apply(WebDriver d) {
+				return d.findElement(By.linkText(linkText));
+			}
+		});
+	}
+
+	/**
+	 * 
+	 * @param valuetoSelect
+	 * @param element
+	 * @return
+	 * @throws IOException 
+	 */
+	@SuppressWarnings("unused")
+	public static synchronized void selectByVisibleText(final WebDriver driver, final String valuetoSelect,
+			final WebElement element, final String nameattri) throws IOException {
+		Select options = null;
+		try {
+			if (element != null) {
+				options = new Select(element);
+				options.selectByVisibleText(valuetoSelect);
+			} else {
+				WebElement checkElementExists = checkElementExists(driver, nameattri);
+				options = new Select(checkElementExists);
+				options.selectByVisibleText(valuetoSelect);
+			}
+		} catch (StaleElementReferenceException e) {
+			try {
+				WebDriverUtil.waitForPageLoaded(driver);
+				WebElement checkElementExists = checkElementExists(driver, nameattri);
+				options = new Select(checkElementExists);
+				options.selectByVisibleText(valuetoSelect);
+			} catch (StaleElementReferenceException Se) {
+				selectByVisibleText(driver, valuetoSelect, wait4XpathPresent(driver, nameattri, 100), nameattri);
+			}
+		} catch (NoSuchElementException e) {
+			try {
+				WebElement checkElementExists = checkElementExists(driver, nameattri);
+				options = new Select(checkElementExists);
+				List<WebElement> options2 = options.getOptions();
+				options.selectByVisibleText(valuetoSelect);
+			} catch (StaleElementReferenceException ee) {
+				WebElement checkElementExists = checkElementExists(driver, nameattri);
+				options = new Select(checkElementExists);
+				List<WebElement> options2 = options.getOptions();
+				options.selectByVisibleText(valuetoSelect);
+			}
+
+		}
+
+	}
+
+	public static synchronized String getselectedValues(final WebDriver driver, final WebElement element,
+			final String nameattri) throws IOException {
+		Select options = null;
+		try {
+			if (element != null) {
+				options = new Select(element);
+			} else {
+				WebElement checkElementExists = checkElementExists(driver, nameattri);
+				options = new Select(checkElementExists);
+			}
+		} catch (StaleElementReferenceException e) {
+			try {
+				WebDriverUtil.waitForPageLoaded(driver);
+				WebElement checkElementExists = checkElementExists(driver, nameattri);
+				options = new Select(checkElementExists);
+			} catch (StaleElementReferenceException Se) {
+				getselectedValues(driver, wait4XpathPresent(driver, nameattri, 100), nameattri);
+			}
+		} catch (NoSuchElementException e) {
+			try {
+				WebElement checkElementExists = checkElementExists(driver, nameattri);
+				options = new Select(checkElementExists);
+			} catch (StaleElementReferenceException ee) {
+				WebElement checkElementExists = checkElementExists(driver, nameattri);
+				options = new Select(checkElementExists);
+			}
+
+		}
+		if (options != null) {
+			return options.getFirstSelectedOption().getText();
+		} else {
+			return null;
+		}
+
+	}
+
+	public static void selectByVisibleValue(final WebDriver driver, final String valuetoSelect,
+			final WebElement element, final String nameattri) throws IOException {
+		Select options = null;
+		try {
+			options = new Select(element);
+			options.selectByValue(valuetoSelect);
+		} catch (StaleElementReferenceException e) {
+			try {
+				WebDriverUtil.waitForPageLoaded(driver);
+				options = new Select(element);
+				options.selectByValue(valuetoSelect);
+			} catch (StaleElementReferenceException Se) {
+				selectByVisibleText(driver, valuetoSelect, wait4XpathPresent(driver, nameattri, 100), nameattri);
+			}
+		}
+
+	}
+
+	public static void selectByIndex(final WebDriver driver, final int valuetoSelect, final WebElement element,
+			final String nameattri) throws IOException {
+		Select options = null;
+		try {
+			options = new Select(element);
+			options.selectByIndex(valuetoSelect);
+		} catch (StaleElementReferenceException e) {
+			try {
+				WebDriverUtil.waitForPageLoaded(driver);
+				options = new Select(element);
+				options.selectByIndex(valuetoSelect);
+			} catch (StaleElementReferenceException Se) {
+				selectByIndex(driver, valuetoSelect, wait4XpathPresent(driver, nameattri, 100), nameattri);
+			}
+		}
+	}
+
+	/**
+	 * 
+	 * @param driver
+	 * @param Selector
+	 * @param secs
+	 * @return
+	 */
+	public static WebElement wait4CssSelectorPresent(final WebDriver driver, final String Selector, final long secs) {
+		return (new WebDriverWait(driver, secs)).until(new ExpectedCondition<WebElement>() {
+			public WebElement apply(WebDriver d) {
+				return d.findElement(By.cssSelector(Selector));
+			}
+		});
+	}
+
+	public static void sleep(final Long long1) {
+		try {
+			Thread.sleep(long1);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void stopDriver(final WebDriver webDriver) {
+		webDriver.quit();
+	}
+
+	public static void tearDown(WebDriver sParent) throws Exception {
+		StringBuffer verificationErrors = new StringBuffer();
+		sParent.quit();
+		String verificationErrorString = verificationErrors.toString();
+		if (!"".equals(verificationErrorString)) {
+			System.out.println(verificationErrorString);
+		}
+	}
+
+	public static Boolean isValueSelected(final WebDriver driver, final WebElement element, final String value,
+			final String xpath) throws IOException {
+		Select options = null;
+		try {
+			options = new Select(element);
+		} catch (StaleElementReferenceException e) {
+			WebDriverUtil.waitForPageLoaded(driver);
+			isValueSelected(driver, wait4XpathPresent(driver, xpath, 100), value, xpath);
+		}
+		if (options != null) {
+			List<WebElement> allSelectedOptions = options.getAllSelectedOptions();
+			for (WebElement webElement : allSelectedOptions) {
+				if (value.equalsIgnoreCase(webElement.getText()))
+					return true;
+
+			}
+		}
+		return false;
+	}
+
+	public static void navigateToUrl(final WebDriver driver, final String url) throws IOException {
+		System.out.println("navigating to url :" + url);
+		driver.navigate().to(url);
+		waitForPageLoaded(driver);
+	}
+
+	@SuppressWarnings("unused")
+	private static String getFileName(String nameTest) throws IOException {
+		Calendar cal = new GregorianCalendar();
+		int month = cal.get(Calendar.MONTH);
+		int year = cal.get(Calendar.YEAR);
+		int second = cal.get(Calendar.SECOND);
+		int mint = cal.get(Calendar.MINUTE);
+		int date = cal.get(Calendar.DATE);
+		int day = cal.get(Calendar.HOUR_OF_DAY);
+		return nameTest + "_" + year + "_" + "_" + date + "_" + (month + 1) + "_" + day + "_" + mint + "_" + second
+				+ ".png";
+	}
+
+	public static void click(WebDriver driver, String xpath) {
+		int i = 0;
+		while (i <= 5) {
+			i++;
+			try {
+				WebElement element = WebDriverUtil.waitUntilElementPresent(driver, xpath, 10, 1);
+				element.click();
+				break;
+			} catch (StaleElementReferenceException e) {
+
+			} catch (Exception e) {
+
+			}
+		}
+
+	}
+
+	public static synchronized void waitUntilElementDisapper(WebDriver driver, String name) {
+		String regex = "(" + name.trim() + ")";
+		Pattern pattern = Pattern.compile(regex);
+		while (true) {
+			Matcher m = pattern.matcher(driver.getPageSource());
+			if (m.find()) {
+				// System.out.println("Loading ......................");
+				continue;
+			} else {
+				System.out.println("stoped  ......................");
+				break;
+			}
+		}
+	}
+
+	public static synchronized boolean findString(final String key, final String source) {
+		String regex = "(" + key.trim() + ")";
+		Pattern pattern = Pattern.compile(regex);
+		Matcher m = pattern.matcher(source);
+		if (m.find()) {
+			return true;
+		}
+		return false;
+	}
+
+	/*
+	 * public static String speedCoversion(final String speed){
+	 * if(StringUtils.containsIgnoreCase("Kbps", speed)){ System.out.println(
+	 * " Speed in Kbps "); String[] a= speed.split(" "); Integer kps=new
+	 * Integer(a[0]);
+	 * 
+	 * } }
+	 */
+
+	public synchronized static boolean isAlertPresent(final WebDriver webDriver) {
+		try {
+			Alert alert = webDriver.switchTo().alert();
+			alert.accept();
+			return true;
+		} catch (NoAlertPresentException Ex) {
+			return false;
+		}
+	}
+	
+	public static String ajaxloader(WebDriver webdriver, final String locator, final String locatoryType,
+			final String value) {
+		String result = "";
+		waitUntilElementIsnotDisplayed1(webdriver, locator);
+		result = "Pass";
+		return result;
+	}
+
+	/*
+	 * Identifies the web element and checks if the element is not checked.
+	 * 
+	 * @param xpathLocator - Element identity
+	 * 
+	 */
+	public String checkIfNotChecked(WebDriver webdriver, String xpathLocator) {
+		WebElement element = null;
+		try {
+			element = this.find(webdriver, xpathLocator, "xpath");
+		} catch (InvocationTargetException e) {
+			System.out.println("Invalid locatorType");
+		} catch (NoSuchMethodException e) {
+			System.out.println("Invalid locator");
+		}
+		if (!element.isSelected())
+			element.click();
+		return "Pass";
+	}
+
+	/*
+	 * 
+	 * This method will try to find the web element base don locator and locator
+	 * type.
+	 * 
+	 * @param locator - Information which is required for identifying the
+	 * element in a web page.
+	 * 
+	 * @param locatorType - Type of locator with which we can identify the
+	 * element.
+	 * 
+	 * @return WebElement
+	 * 
+	 * 
+	 * @throws InvocationTargetException
+	 * 
+	 * @throws NoSuchMethodException
+	 */
+	public WebElement find(WebDriver webdriver, String locator, String locatorType)
+			throws InvocationTargetException, NoSuchMethodException {
+		System.out.println(" Finding Element  Locator :" + locator + "  LocatorType :" + locatorType);
+		Class<?> by = getClassInstance("org.openqa.selenium.By");
+		method = getMethod(by, locatorType, new Class[] { String.class });
+		WebElement element = null;
+		int maxAttempts = 1;
+		while (maxAttempts <= 5) {
+			try {
+				element = webdriver.findElement((By) method.invoke(by, locator));
+				if (element != null)
+					break;
+			} catch (StaleElementReferenceException e) {
+				maxAttempts++;
+				if (maxAttempts == 5) {
+					throw e;
+
+				}
+			} catch (ElementNotVisibleException e) {
+				maxAttempts++;
+				if (maxAttempts == 5) {
+					throw e;
+
+				}
+			} catch (IllegalArgumentException e) {
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			}
+		}
+		return element;
+	}
+
+	/*
+	 * This method will create instance for the specified class name at run
+	 * time.
+	 * 
+	 * @param className
+	 * 
+	 * @return Object of Class
+	 * 
+	 */
+	private static Class<?> getClassInstance(String className) {
+		try {
+			return Class.forName(className);
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	/*
+	 * This method creates an object of type Method
+	 * 
+	 * @param className
+	 * 
+	 * @param methodName
+	 * 
+	 * @param param
+	 * 
+	 * @return
+	 * 
+	 * @throws NoSuchMethodException
+	 */
+
+	private static Method getMethod(Class<?> className, String methodName, @SuppressWarnings("rawtypes") Class[] param)
+			throws NoSuchMethodException {
+		try {
+			return className.getDeclaredMethod(methodName, param);
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace();
+			throw e;
+		}
+		return null;
+	}
+
+
+
+//____________________________________________________________________________________________________________________________________________________________________________
+
+public synchronized void DriverClose(String WindowName) throws InvocationTargetException, NoSuchMethodException,IOException {	
+	
+	try{
+	GlobalConstants.driver.close();
+	System.setProperty("FailStatus", "0");
+	//return 0;
+	}catch(Exception e){
+		Print_Util.logMessage("Window is not displayed");
+		ResultClass.testStatus(true);
+		System.out.println("Window is not displayed");
+		//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),WindowName+" Window is not displayed","fail");
+		// ExtentTestManager.getTest().log(LogStatus.FAIL, testdataMap.get("TestCaseDescription"),WindowName+" Window is not displayed"+" -Log from threadId: " + Thread.currentThread().getId());	
+		 GlobalConstants.driver.quit();
+		 System.setProperty("FailStatus", "1");
+		 //return 1;
+	}
+}
+
+
+/******************************************************************************************
+ * functionName:ENTER
+ * designed by:fareeda
+ * Description:TO send enter keys
+ * 
+ * *****************************************************************************************
+ * */
+
+
+public synchronized  String ENTER(WebElement element,String testdata) throws InvocationTargetException, NoSuchMethodException {
+	
+
+String ENTERResult;
+
+try{
+	//element.click();
+			element.sendKeys(Keys.ENTER);
+			
+			ENTERResult="Pass";
+			
+}
+catch(Exception e){
+	ENTERResult=e.toString();
+	// IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.FAILED,"Error in performing Enter Operation","ENTER");
+}
+	return ENTERResult;
+}
+
+
+
+/******************************************************************************************
+* functionName:linkclick
+* designed by:fareeda
+* Description:TO Click link
+* 
+* *****************************************************************************************
+* */
+
+public synchronized  String linkclick(WebElement element,String testdata) throws InvocationTargetException, NoSuchMethodException {
+String linkclickresult ;
+
+try
+{
+	element.click();
+
+
+	linkclickresult	= "Pass";
+	
+	 //IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.PASSED,"Successfully performed click function on the Object","linkclick");
+
+	
+	}catch(Exception e){
+		
+		//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.FAILED,"Error in clikcing link"+e.getMessage(),"linkclick");
+		
+		linkclickresult	= e.toString();
+		
+		
+		
+	}
+	
+	
+	return linkclickresult;
+
+
+}
+
+/******************************************************************************************
+* functionName:click
+* designed by:fareeda
+* Description:TO Click 
+* 
+* *****************************************************************************************
+* */
+
+public synchronized  String click(By locator) throws InvocationTargetException, NoSuchMethodException {
+	
+	String Buttonclickresult ;
+	//log.info("Executing click-- ");
+	try
+	{
+		WebElement element=GlobalConstants.driver.findElement(locator);
+		try{
+			GlobalConstants.driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+		element.click();
+		
+		}catch (Exception e)
+		{
+			Print_Util.logError("unhandled alert exception is found"+e);
+			ResultClass.testStatus(false);
+			System.out.println("unhandled alert exception is found"+e);
+		}
+	
+	
+		Buttonclickresult	= "Pass";
+		//log.info("Successfully performed click function on the Object");
+		//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.PASSED,"Successfully performed click function on the Object","click");
+
+		 WebDriverWait wait = new WebDriverWait(GlobalConstants.driver,1);
+		try
+		{
+			if(wait.until(ExpectedConditions.alertIsPresent())==null){
+				System.out.println("Alert is not present");
+				Print_Util.logError("Alert is not present");
+				ResultClass.testStatus(false);
+				// IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT,"Alert is not present");
+
+			}
+			else{
+		  Alert alert = wait.until(ExpectedConditions.alertIsPresent());
+				//handleAlert(GlobalConstants.driver);
+			}
+		}
+		catch(NoAlertPresentException e)
+		{
+			System.out.println("No Alert!!!!");
+			//Print_Util.logDebug("No Alert!!!!");
+			//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT,"No Alert found after clicking the Button");
+
+			//Thread.sleep(1000);
+			
+		}
+		catch(TimeoutException e)
+		{
+			System.out.println("No Alert found after clicking the Button");
+			//Print_Util.logErro("No Alert found after clicking the Button");
+			//ResultClass.testStatus(false);
+			//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT,"No Alert found after clicking the Button");
+
+		}
+		
+	}catch(Exception e){
+		//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.FAILED,"Error in clikcing "+e.getMessage(),"click");
+		
+		Buttonclickresult	= e.toString();
+		
+		
+		
+	}
+	
+	//log.info("Object is clicked ");
+	return Buttonclickresult;
+	
+	
+}
+
+/******************************************************************************************
+* functionName:click
+* designed by:fareeda
+* Description:TO Click 
+* 
+* *****************************************************************************************
+* */
+
+public synchronized  void click(WebElement element) throws InvocationTargetException, NoSuchMethodException {	
+
+try {
+element.click();
+//GlobalConstants.driver.switchTo().alert();
+} catch (UnhandledAlertException f) {
+try {
+	
+    Alert alert = GlobalConstants.driver.switchTo().alert();
+    String alertText = alert.getText();
+    System.out.println("Alert data: " + alertText);
+    Print_Util.logDebug("Alert data: " + alertText);
+    alert.accept();
+} catch (NoAlertPresentException e) {
+    e.printStackTrace();
+}
+catch (Exception e) {
+    e.printStackTrace();
+}  
+}
+	
+}
+
+/******************************************************************************************
+* functionName:click
+* designed by:fareeda
+* Description:TO Click through javascript
+* 
+* *****************************************************************************************
+* */
+
+
+public synchronized  void clickjs(By locator) throws InvocationTargetException, NoSuchMethodException {	
+
+try {
+	WebElement element=GlobalConstants.driver.findElement(locator);
+	JavascriptExecutor executor = (JavascriptExecutor)GlobalConstants.driver;
+	executor.executeScript("arguments[0].click();", element);
+//element.click();
+//element.sendKeys("ENTER");
+//GlobalConstants.driver.switchTo().alert();
+} 
+catch (Exception e) {
+    e.printStackTrace();
+}  
+
+	
+}
+
+
+
+
+
+
+
+/******************************************************************************************
+* functionName:SendKeys
+* designed by:fareeda
+* Description:TO sendkeys
+* 
+* *****************************************************************************************
+* */
+
+public synchronized  String SendKeys(WebElement element,String testdata) throws InvocationTargetException, NoSuchMethodException {
+
+
+String SendKeysresult;
+
+try{
+	
+	//log.info("Executing SendKeys Functions");
+	// IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT,"Executing SendKeys Functions");
+	element.clear();
+	//log.info("Cleared the default values in textboxes");
+	//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT,"Cleared the default values in textboxes");
+	element.sendKeys(testdata);
+	//log.info("Successfully performed SendKeys function as values are set in the textbox");
+	//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT,"Successfully performed SendKeys function as values are set in the textbox");
+	// IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.PASSED,"Successfully performed SendKeys function as values are set in the textbox","SendKeys");
+
+	SendKeysresult= "Pass";
+}
+catch(Exception e){
+	 //IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.FAILED," Error in SendKeys "+e.getMessage(),"SendKeys");
+		
+	SendKeysresult=e.toString();
+	
+}
+//log.info("Value is Set ");
+//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT," Value is Set ");
+
+return SendKeysresult;
+
+
+}
+/******************************************************************************************
+* functionName:SendKeys
+* designed by:fareeda
+* Description:TO sendkeys
+* 
+* *****************************************************************************************
+* */
+public synchronized  String SendKeys(By locator,String testdata) throws InvocationTargetException, NoSuchMethodException {
+
+
+String SendKeysresult;
+
+try{
+	WebElement element=GlobalConstants.driver.findElement(locator);
+	//log.info("Executing SendKeys Functions");
+	// IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT,"Executing SendKeys Functions");
+	element.clear();
+	//log.info("Cleared the default values in textboxes");
+	//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT,"Cleared the default values in textboxes");
+	element.sendKeys(testdata);
+	//log.info("Successfully performed SendKeys function as values are set in the textbox");
+	//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT,"Successfully performed SendKeys function as values are set in the textbox");
+	// IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.PASSED,"Successfully performed SendKeys function as values are set in the textbox","SendKeys");
+
+	SendKeysresult= "Pass";
+}
+catch(Exception e){
+	// IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.FAILED," Error in SendKeys "+e.getMessage(),"SendKeys");
+		
+	SendKeysresult=e.toString();
+	
+}
+//log.info("Value is Set ");
+//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT," Value is Set ");
+
+return SendKeysresult;
+
+
+}	
+/******************************************************************************************
+* functionName:selectDropdown
+* designed by:fareeda
+* Description: Select values from dropdown
+* testdata:optionId;value in the dropdown
+* *****************************************************************************************
+* */
+
+
+public synchronized  String selectDropdown(WebElement element,String testdata){
+Select dropdown = new Select(element);
+String var = null;
+if(element.isEnabled()){
+String[] data=testdata.split(";");
+String option=data[0];
+String val=data[1];
+switch(option){
+case"visibleText":
+	dropdown.selectByVisibleText(val);
+	//log.info(" Sucessfully set value "+val);
+	//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT," Sucessfully set value "+val);
+	
+	var="Pass";
+	return var;
+case"value":
+	dropdown.selectByValue(val);
+	//log.info("Sucessfully set value "+val);
+	//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT," Sucessfully set value "+val);
+	
+	var="Pass";
+	//return varVal;
+	
+case"index":
+	int iVal = Integer.parseInt(val);
+	dropdown.selectByIndex(iVal);
+	//log.info("Sucessfully set index value "+iVal);
+	//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT," Sucessfully set value "+val);
+	var="Pass";
+	
+default:
+	System.out.println("Check the test data parameters while passing the value");
+	Print_Util.logDebug("Check the test data parameters while passing the value");
+	// IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT," Check the test data parameters while passing the value ","selectDropdown");
+		
+	 var="Fail";
+	
+}
+
+}
+
+else{
+	var="PASS";
+	//log.info("The dropdown is disabled");
+	//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT,"The dropdown is disabled");
+	
+}
+return var;
+
+}
+
+
+/******************************************************************************************
+* functionName:ValidateDropDownValue
+* designed by:fareeda
+* Description: validate values from dropdown
+* testdata:optionId;value in the dropdown
+* *****************************************************************************************
+* */
+public synchronized  Boolean ValidateDropDownValue(By locator ,String testdata)throws IOException{
+Boolean boolval;
+try{
+Select dropdown = new Select(GlobalConstants.driver.findElement(locator));
+//dropdown.getOptions()
+WebElement SelectedElement=dropdown.getFirstSelectedOption();
+if (SelectedElement.getText().contains(testdata)){
+	
+	boolval=true;
+}else{
+	
+	//System.out.println(testdata+ " is not selected");
+	boolval=false;
+}}catch(Exception e){
+	System.out.println("Exception is thrown while validating selected value "+e);
+	Print_Util.logError("Exception is thrown while validating selected value "+e);
+	ResultClass.testStatus(false);
+	return false;
+	
+	
+}
+	
+return boolval;
+
+}
+
+/******************************************************************************************
+* functionName:ValidateDropDownValue
+* designed by:fareeda
+* Description: validate values from dropdown
+* testdata:optionId;value in the dropdown
+* *****************************************************************************************
+* */
+public synchronized String GetSelectedvalue(By locator)throws IOException{
+Boolean boolval;
+try{
+Select dropdown = new Select(GlobalConstants.driver.findElement(locator));
+//dropdown.getOptions()
+WebElement SelectedElement=dropdown.getFirstSelectedOption();
+return SelectedElement.getText();
+	
+
+}catch(Exception e){
+	System.out.println("Exception is thrown while validating selected value "+e);
+	Print_Util.logError("Exception is thrown while validating selected value "+e);
+	ResultClass.testStatus(false);
+	return null;
+	
+	
+}
+		
+}
+
+
+
+/******************************************************************************************
+* functionName:ValidateDropDownValue
+* designed by:fareeda
+* Description: validate values from dropdown
+* testdata:optionId;value in the dropdown
+* *****************************************************************************************
+* */
+public synchronized  String GetValueOfTheGivenIndexInSelectBox(By locator ,int index )throws IOException{
+Boolean boolval;
+try{
+Select dropdown = new Select(GlobalConstants.driver.findElement(locator));
+List<WebElement> ListofWebElements= dropdown.getOptions();
+return ListofWebElements.get(index).getText();
+}catch(Exception e){
+	System.out.println("Exception is thrown while getting selectbox value "+e);
+	Print_Util.logError("Exception is thrown while getting selectbox value "+e);
+	ResultClass.testStatus(false);
+	return null;
+	
+	
+}
+}
+
+
+/******************************************************************************************
+* functionName:selectDropdown
+* designed by:fareeda
+* Description: select values from dropdown
+* testdata:optionId;value in the dropdown
+* *****************************************************************************************
+* */
+public synchronized  String selectDropdown(By locator ,String testdata){
+WebElement element=GlobalConstants.driver.findElement(locator);
+Select dropdown = new Select(GlobalConstants.driver.findElement(locator));
+//dropdown.getOptions().get(0).getAttribute("value");
+String var = null;
+try{
+if(GlobalConstants.driver.findElement(locator).isEnabled()){
+String[] data=testdata.split("-");
+String option=data[0];
+String val=data[1];
+if (data.length>2){
+	for (int i=2 ;i< data.length;i++){
+		val=val+"-"+data[i]	;
+	}
+	
+}
+
+switch(option){
+case"visibleText":
+	dropdown.selectByVisibleText(val);
+	//log.info(" Sucessfully set value "+val);
+	//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT," Sucessfully set value "+val);
+	System.out.println("Sucessfully set value "+val);
+	Print_Util.logDebug("Sucessfully set value "+val);
+	var="Pass";
+	return var;
+case"value":
+	long time1 = System.currentTimeMillis();
+	
+	
+	dropdown.selectByVisibleText(val);
+	long time2 = System.currentTimeMillis();
+	long timeTaken = time2 - time1;  
+	System.out.println("Time taken " + timeTaken + " ms");  
+	//log.info("Sucessfully set value "+val);
+	//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT," Sucessfully set value "+val);
+	System.out.println("Sucessfully set value "+val);
+	Print_Util.logDebug("Sucessfully set value "+val);
+	var="Pass";
+	//return varVal;
+	
+case"index":
+	int iVal = Integer.parseInt(val);
+	dropdown.selectByIndex(iVal);
+	//log.info("Sucessfully set index value "+iVal);
+	//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT," Sucessfully set value "+val);
+	System.out.println("Sucessfully set value "+val);
+	Print_Util.logDebug("Sucessfully set value "+val);
+	var="Pass";
+	
+default:
+	System.out.println("Check the test data parameters while passing the value");
+	 //IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT," Check the test data parameters while passing the value ","selectDropdown");
+	Print_Util.logDebug("Sucessfully set value "+val);	
+	 var="Fail";
+	
+}
+
+}
+
+else{
+	var="PASS";
+	//log.info("The dropdown is disabled");
+	//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT,"The dropdown is disabled");
+	System.out.println("The dropdown is disabled");
+	 Print_Util.logDebug("The dropdown is disabled");
+}
+}catch(Exception e){
+	//log.info("Exception in thrown while selecting dropdown ");
+}
+return var;
+
+}
+
+
+public synchronized  String dValues(WebElement element,String testdata)  {
+	
+ // Create object of SimpleDateFormat class and decide the format
+DateFormat dateFormat = new SimpleDateFormat("MMddyyyyHHmmss");
+
+ //get current date time with Date()
+ Date date = new Date();
+ 
+ // Now format the date
+ String datefull= dateFormat.format(date);
+ System.out.println("dynamic value for the fields is " +datefull);
+ Print_Util.logDebug("dynamic value for the fields is " +datefull);
+
+ element.sendKeys(datefull);
+// log.info("successfully set "+datefull);
+return "PASS";
+	
+}
+
+
+
+
+
+
+
+public synchronized  void handleAlert() throws InterruptedException{
+
+
+int i=0;
+while(i++<=1)
+{
+	try
+	{
+		
+		//log.info(" Handling alert ");
+		// IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT," Handling alert ","handleAlert");
+		Alert alert = GlobalConstants.driver.switchTo().alert();
+		
+		//log.info("Message on Alert = "+alert.getText());
+		 //IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT," Message on Alert = "+alert.getText(),"handleAlert");
+		alert.accept();
+		
+		GlobalConstants.driver.switchTo().defaultContent();
+			
+		break;
+	}
+	catch(NoAlertPresentException e)
+	{
+		  GlobalConstants.driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+			
+		continue;
+	}
+	
+	
+	catch(UnhandledAlertException e){
+		
+		
+		  GlobalConstants.driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+			
+		continue;
+		
+	}
+	
+	
+}
+//log.info("Handling any alert--DONE !!");
+	
+
+
+
+}
+
+/******************************************************************************************
+* functionName:WaitUntilObjectExist
+* designed by:fareeda
+* Description: Wait for loading the webpage elements
+* ****************************************************
+* */
+public synchronized  void WaitUntilObjectExist(By Locator) {
+try{
+	//GlobalConstants.driver.findElement(By.xpath("//input[contains(@value,'Back') ]")).isEnabled();
+WebElement element=GlobalConstants.driver.findElement(Locator);
+int counter=0;
+for (counter=0;counter<1000;counter++){
+	try{
+		WebDriverWait wait = new WebDriverWait(GlobalConstants.driver,1);
+		wait.until(ExpectedConditions.elementToBeClickable(element));
+		try{
+	    if (element.isDisplayed())  
+	    	break;
+		else if (element.isEnabled())
+    	break;
+			}
+			catch(Exception ex){ 
+				if (element.isEnabled())  
+	    	     break;}
+	}
+	catch(Exception e){
+	   counter++;
+	}
+}
+System.out.println("element exists");
+
+}
+catch(Exception e){
+	System.out.println("Element does not exist" +e);
+}
+} 
+
+
+
+/******************************************************************************************
+* functionName:WaitUntilObjectExist
+* designed by:fareeda
+* Description: Wait for loading the webpage elements
+* ****************************************************
+* */
+public synchronized  void WaitUntilObjectExistisenabled(By Locator) {
+try{
+	//GlobalConstants.driver.findElement(By.xpath("//input[contains(@value,'Back') ]")).isEnabled();
+WebElement element=GlobalConstants.driver.findElement(Locator);
+int counter=0;
+for (counter=0;counter<1000;counter++){
+	
+		Thread.sleep(1);
+		try{
+	    if (element.isDisplayed())  
+	    	break;
+		else if (element.isEnabled())
+    	break;
+			}
+			catch(Exception ex){ 
+				 counter++;
+				}
+	
+	
+}
+System.out.println("element exists");
+
+}
+catch(Exception e){
+	System.out.println("Element does not exist" +e);
+}
+} 
+
+
+//
+/******************************************************************************************
+* functionName:WaitUntilObjectExist
+* designed by:fareeda
+* Description: Wait for loading the webpage elements
+* ****************************************************
+* */
+public synchronized  void WaitUntilObjectExist(WebElement element) {
+
+
+int counter=0;
+for (counter=0;counter<100;counter++){
+	try{
+		WebDriverWait wait = new WebDriverWait(GlobalConstants.driver,1);
+		wait.until(ExpectedConditions.elementToBeClickable(element));	
+	    if (element.isDisplayed())  
+	    	break;
+	}
+	catch(Exception e){
+	   counter++;
+	}
+}
+System.out.println("element exists");
+
+} 
+
+
+/******************************************************************************************
+* functionName:WainUntilSecondWindowExist
+* designed by:fareeda
+* Description: Wait until second window exist
+* ****************************************************
+* */
+public synchronized  void WainUntilSecondWindowExist() {
+
+
+int counter=0;
+for (counter=0;counter<20;counter++){
+	try{
+		alertaccept();
+		if (GlobalConstants.driver.getWindowHandles().size()>1)  
+	     break;
+	}
+	catch(Exception e){
+	   counter++;
+	}
+}
+System.out.println("element exists");
+
+} 
+
+
+/******************************************************************************************
+* functionName:alertaccept
+* designed by:fareeda
+* Description: TO accept the alert
+* ****************************************************
+* */
+
+public synchronized  boolean alertaccept(){
+try
+{
+
+Alert alert = GlobalConstants.driver.switchTo().alert();
+System.out.println("The alert box text is : "+alert.getText());
+Print_Util.logDebug("The alert box text is : "+alert.getText());
+//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT,"The alert box text is : "+alert.getText());
+
+alert.accept();
+
+//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT," Clicked on OK of alertbox");
+return true;
+
+}
+catch(NoAlertPresentException e)
+{
+
+  //GlobalConstants.driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+return false;
+
+}
+ 	
+}
+/******************************************************************************************
+* functionName:alertaccept
+* designed by:fareeda
+* Description: TO accept the alert
+* ****************************************************
+* */
+
+public synchronized  boolean alertReject(){
+try
+{
+
+GlobalConstants.driver.switchTo().alert().dismiss();
+//System.out.println("The alert box text is : "+alert.getText());
+//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT,"The alert box text is : "+alert.getText());
+
+//alert.dismiss();
+return true;
+
+}
+catch(NoAlertPresentException e)
+{
+
+  //GlobalConstants.driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+return false;
+
+}
+ 	
+}
+
+/******************************************************************************************
+* functionName:isAlertPresentAndAccept
+* designed by:fareeda
+* Description: TO validate the alert present and accept
+* *****************************************************/
+public synchronized  void isAlertPresentAndAccept(String reportingval) throws IOException{
+try{
+	boolean alertverify=false;
+int i=0;
+while(i++<100){
+alertverify=alertaccept();
+if (alertverify==true)
+break;
+}
+if (alertverify==true){
+	
+	//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),reportingval+"  is displayed ","pass");
+	//ExtentTestManager.getTest().log(LogStatus.PASS,testdataMap.get("TestCaseDescription"), reportingval+"  is displayed "+" -Log from threadId: " + Thread.currentThread().getId());
+	System.out.println(reportingval+" is displayed");
+	Print_Util.logMessage(reportingval+" is displayed");
+	 ResultClass.testStatus(true);
+	
+}else{
+	
+	//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),reportingval+"  is not displayed ","fail");
+	//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"), reportingval+"  is not displayed "+" -Log from threadId: " + Thread.currentThread().getId());
+	System.out.println(reportingval+" is not displayed");
+	Print_Util.logError(reportingval+" is not displayed");
+	 ResultClass.testStatus(false);
+}
+}catch(Exception e){
+	System.out.println("Exception is thrown"+e);
+	Print_Util.logError("Exception is thrown"+e);
+	 ResultClass.testStatus(false);
+	
+}
+}
+
+/******************************************************************************************
+* functionName:isAlertPresentAndReject
+* designed by:fareeda
+* Description: TO validate the alert present and accept
+* *****************************************************/
+public synchronized  void isAlertPresentAndReject(String reportingval)throws IOException {
+try{
+	boolean alertverify=false;
+int i=0;
+while(i++<100){
+alertverify=alertReject();
+if (alertverify==true)
+break;
+}
+if (alertverify==true){
+	
+	//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),reportingval+"  is displayed ","pass");
+	//ExtentTestManager.getTest().log(LogStatus.PASS,testdataMap.get("TestCaseDescription"), reportingval+"  is displayed "+" -Log from threadId: " + Thread.currentThread().getId());
+	System.out.println(reportingval+" is displayed");
+	Print_Util.logMessage(reportingval+" is displayed");
+	 ResultClass.testStatus(true);
+	
+}else{
+	
+	//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),reportingval+"  is not displayed ","fail");
+	System.out.println(reportingval+" is not displayed");
+	Print_Util.logError(reportingval+" is not displayed");
+	 ResultClass.testStatus(false);
+	//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"), reportingval+"  is not displayed "+" -Log from threadId: " + Thread.currentThread().getId());
+}
+}catch(Exception e){
+	System.out.println("Exception is thrown"+e);
+	Print_Util.logError("Exception is thrown"+e);
+	 ResultClass.testStatus(false);
+}
+}
+
+
+/******************************************************************************************
+* functionName:isAlertPresent
+* designed by:fareeda
+* Description: TO validate the alert present
+* *****************************************************/
+public synchronized  boolean isAlertPresent() 
+{ 
+try 
+{ 
+	
+    GlobalConstants.driver.switchTo().alert(); 
+    return true; 
+}   // try 
+catch (NoAlertPresentException Ex) 
+{ 
+    return false; 
+}   // catch 
+} 
+
+
+/******************************************************************************************
+* functionName:waituntilAlertdisplayed
+* designed by:fareeda
+* Description: TO wait until  Alert displayed
+* *****************************************************/
+
+
+public synchronized  void waituntilAlertdisplayed() 
+{ 
+
+for(int i=0;i<100;i++){
+try 
+  { 
+	
+    GlobalConstants.driver.switchTo().alert(); 
+    
+    if (isAlertPresent()){
+    
+    	break;
+    }
+    
+}   // try 
+catch (Exception Ex) 
+{ 
+    continue;
+}   // catch 
+} 
+}
+
+
+/******************************************************************************************
+* functionName:SelectRadioButton
+* designed by:fareeda
+* Description: TO select radio button
+* *****************************************************/
+
+public synchronized  String SelectRadioButton(By Locator) throws InvocationTargetException, NoSuchMethodException {
+
+
+String SendKeysresult;
+
+try{
+	WebElement element=GlobalConstants.driver.findElement(Locator);
+	
+	fnHighlightMe(element);
+	
+	fnHighlightMe(element);
+	Thread.sleep(100);
+	clickjs( Locator);
+
+	// IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.PASSED,"Successfully performed Selecting Radio button","Radio Button");
+
+	SendKeysresult= "Pass";
+}
+catch(Exception e){
+	 //IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.FAILED," Error in SendKeys "+e.getMessage(),"radiobutton");
+		
+	SendKeysresult=e.toString();
+	
+}
+//log.info("Value is Set ");
+//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT," Value is Set ");
+
+return SendKeysresult;
+
+
+}
+
+
+/******************************************************************************************
+* functionName:SelectRadioButtonUsingMapFile
+* designed by:fareeda
+* Description: TO select radio button
+* *****************************************************/
+public synchronized  String SelectRadioButtonUsingMapFile(By locator) throws InvocationTargetException, NoSuchMethodException {
+
+
+String SendKeysresult;
+
+try{
+	//By Vplanradiobuttonlocator=mapfileLogin.getLocator("Vplanradiobutton");
+	
+	//select vplan radio button
+	WebElement element=GlobalConstants.driver.findElement(locator);
+	
+	fnHighlightMe(GlobalConstants.element);
+	
+	fnHighlightMe(element);
+	element.click();
+	// IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.PASSED,"Successfully performed Selecting Radio button","Radio Button");
+
+	SendKeysresult= "Pass";
+}
+catch(Exception e){
+	// IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.FAILED," Error in SendKeys "+e.getMessage(),"radiobutton");
+		
+	SendKeysresult=e.toString();
+	
+}
+//log.info("Value is Set ");
+//IPMcomm.logMessage(IPMcomm.TEST_STEP, IPMcomm.DEBUG_PRINT," Value is Set ");
+
+return SendKeysresult;
+
+
+}
+
+
+public synchronized  void fnHighlightMe(WebElement element){
+  //Creating JavaScriptExecuter Interface
+   JavascriptExecutor js = (JavascriptExecutor)GlobalConstants.driver;
+   for (int iCnt = 0; iCnt < 1; iCnt++) {
+      //Execute javascript
+         js.executeScript("arguments[0].style.border='4px groove green'", element);
+         try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+         js.executeScript("arguments[0].style.border=''", element);
+   }
+}
+
+/******************************************************************************************
+* functionName:switchframe
+* designed by:fareeda
+* Description: Switch Frame
+* *****************************************************************************************
+* */
+
+public synchronized  void SwitchFramebyname(WebElement element)throws IOException{
+  //Creating JavaScriptExecuter Interface
+try{ 
+	GlobalConstants.driver.switchTo().frame(element);	
+}catch(Exception e){
+	System.out.println(element.getAttribute("name")+"Frame doesnot exist");
+	Print_Util.logError(element.getAttribute("name")+"Frame doesnot exist");
+	 ResultClass.testStatus(false);
+}
+
+}
+
+
+/******************************************************************************************
+* functionName:SwitchFramebyname
+* designed by:fareeda
+* Description: Switch Frame
+* *****************************************************************************************
+* */
+public synchronized  void SwitchFramebyname(By locator)throws IOException{
+  //Creating JavaScriptExecuter Interface
+WebElement element=GlobalConstants.driver.findElement(locator);
+try{ 
+	
+	GlobalConstants.driver.switchTo().frame(element);	
+}catch(Exception e){
+	System.out.println(element.getAttribute("name")+"Frame doesnot exist");
+	Print_Util.logError(element.getAttribute("name")+"Frame doesnot exist");
+	 ResultClass.testStatus(false);
+	
+}
+
+}
+/******************************************************************************************
+* functionName:switchwindow
+* designed by:fareeda
+* Description:Switch multiple window
+* *****************************************************************************************
+* */
+
+public synchronized  void SwitchMultipleWindow(String parentwindow)throws IOException{
+  //Creating JavaScriptExecuter Interface
+try{ 
+	Set<String> allWindowHandles = GlobalConstants.driver.getWindowHandles();
+	for (String currentWindowHandle : allWindowHandles) {
+		if (!currentWindowHandle.equals(parentwindow)) {
+			
+			GlobalConstants.driver.switchTo().window(currentWindowHandle);
+			//GlobalConstants.driver.getTitle();
+			System.out.println("Window is switched");
+			
+			Print_Util.logMessage("Window is Switched");
+			 ResultClass.testStatus(true);
+		}
+	}
+	
+}catch(Exception e){
+	System.out.println("Window is not Switched");
+	Print_Util.logError("Window is not Switched");
+	 ResultClass.testStatus(false);
+	
+}
+
+}
+
+
+/******************************************************************************************
+* functionName:switchwindow
+* designed by:fareeda
+* Description:Switch multiple window
+* ******************************************************************************************/
+public synchronized  void SwitchWindow(String parentwindow)throws IOException{
+  //Creating JavaScriptExecuter Interface
+try{ 
+	System.out.println("switchwindowfunction1");
+			GlobalConstants.driver.switchTo().window(parentwindow);
+			System.out.println("switchwindowfunction2");
+			
+		
+	}
+	
+catch(Exception e){
+	System.out.println("Window is not Switched");
+	Print_Util.logError("Window is not Switched");
+	 ResultClass.testStatus(false);
+	
+}
+
+}
+
+
+/******************************************************************************************
+* functionName:SelectGlobalConstants.driver
+* designed by:fareeda
+* Description:To select driver
+* ******************************************************************************************/
+public synchronized  WebDriver SelectDriver(){
+  //Creating JavaScriptExecuter Interface
+String baseUrl =GlobalConstants.Application_URL ;	
+switch (GlobalConstants.Driver.toUpperCase()){
+
+case "FIREFOX":
+System.setProperty("webdriver.firefox.driver", "C:\\program files\\Mozilla Firefox\\firefox.exe");
+GlobalConstants.driver = new FirefoxDriver();
+// launch Firefox and direct it to the Base URL
+GlobalConstants.driver.get(baseUrl);
+ break;
+
+case "CHROME":
+//System.setProperty("webdriver.chrome.driver", System.getProperty("user.dir")+"/libs/chromedriver.exe");
+System.setProperty("webdriver.chrome.driver", "C:/Users/quadifa/Desktop/chromedriver.exe");
+
+//driver = new ChromeDriver();
+ChromeOptions options = new ChromeOptions();
+options.addArguments("chrome.switches","--disable-extensions");
+System.setProperty("webdriver.chrome.driver", "./libs/chromedriver.exe");
+GlobalConstants.driver =new ChromeDriver(options);
+
+
+// launch Firefox and direct it to the Base URL
+GlobalConstants.driver.get(baseUrl);
+ break;
+case "IE":
+//log.info("Starting RemoteDriver ......");
+
+	
+//System.setProperty("webdriver.ie.driver",RuntimeConfigs.getconfigValue("app.driverpath"));
+	
+	DesiredCapabilities cap = DesiredCapabilities.internetExplorer();
+	
+	
+	cap.setCapability(InternetExplorerDriver.ENABLE_PERSISTENT_HOVERING,false);
+	cap.setCapability(InternetExplorerDriver.REQUIRE_WINDOW_FOCUS, false);
+	cap.setCapability(InternetExplorerDriver.UNEXPECTED_ALERT_BEHAVIOR, true);
+	cap.setCapability(CapabilityType.ACCEPT_SSL_CERTS, true);
+	cap.setCapability(InternetExplorerDriver.INTRODUCE_FLAKINESS_BY_IGNORING_SECURITY_DOMAINS, true); 
+	cap.setJavascriptEnabled(true); 
+	 
+	
+	
+
+	
+	
+	//cap.setCapability("ie.ensureCleanSession", true);
+	
+	//cap.setJavascriptEnabled(Boolean.TRUE);
+	
+	//cap.setCapability(CapabilityType.UNEXPECTED_ALERT_BEHAVIOUR, UnexpectedAlertBehaviour.IGNORE);
+	GlobalConstants.driver = new InternetExplorerDriver(cap);
+	
+	
+	GlobalConstants.driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+
+	// launch Firefox and direct it to the Base URL
+	GlobalConstants.driver.get(baseUrl);		
+	
+
+			
+
+break;
+ 
+default:
+GlobalConstants.driver = new FirefoxDriver();
+// launch Firefox and direct it to the Base URL
+GlobalConstants.driver.get(baseUrl);
+ break;
+ 
+}
+
+
+
+GlobalConstants.driver.manage().window().maximize();
+
+
+return GlobalConstants.driver;	
+
+}
+
+
+
+/******************************************************************************************
+* functionName:Windowpopupverify
+* designed by:fareeda
+* Description:To verify window pop up
+* ******************************************************************************************/
+public synchronized  void Windowpopupverify(Process p,String reportingval)throws IOException
+{
+try{
+BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+
+String line;
+String currentline="false";
+while ((line = input.readLine()) != null) {
+	currentline=line;
+  System.out.println(line);
+  Print_Util.logMessage(line);
+  ResultClass.testStatus(true);
+}
+
+if (currentline.contains("true")){
+	System.out.println(reportingval+" exists");
+	Print_Util.logMessage(reportingval+" exists");
+	 ResultClass.testStatus(true);
+	//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),reportingval+" exists","pass");
+	//ExtentTestManager.getTest().log(LogStatus.PASS, testdataMap.get("TestCaseDescription"),reportingval+"  Exists "+" -Log from threadId: " + Thread.currentThread().getId());
+}
+else{
+	System.out.println(reportingval+" does not exists");
+	Print_Util.logError(reportingval+"does not exists");
+	 ResultClass.testStatus(false);
+	//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),reportingval+" does not exists","fail");
+	//ExtentTestManager.getTest().log(LogStatus.FAIL, testdataMap.get("TestCaseDescription"),reportingval+" does not exists"+" -Log from threadId: " + Thread.currentThread().getId());
+}
+	
+
+}catch(Exception e){
+	System.out.println("Exception thrown is "+e);	
+	Print_Util.logError("Exception thrown is "+e);
+	 ResultClass.testStatus(false);
+}
+
+
+}
+
+
+/******************************************************************************************
+* functionName:Tablecount
+* designed by:fareeda
+* Description:To verify Tablecount
+* ******************************************************************************************/
+public synchronized  int Tablecount(By locator)throws IOException{
+int count=0;
+try{
+count=GlobalConstants.driver.findElements(locator).size();
+//List<WebElement> tablecolumns=
+return count;
+
+}catch(Exception e){
+
+System.out.println("Exception while getting table column count");
+Print_Util.logError("Exception while getting table column count");
+ResultClass.testStatus(false);
+return count;
+}
+
+
+}
+
+
+/******************************************************************************************
+* functionName:GetRowValuesOfColumn
+* designed by:fareeda
+* Description:To get rowvalues of a column
+* ******************************************************************************************/
+public synchronized  List<String> GetRowValuesOfColumn(String columnby,String rowby,String columnname)throws Exception  {
+
+List<String> rowvalus=new ArrayList();
+int columnnumber;
+By RetrievedTablerowslocator=mapHomePage.getLocator(rowby);
+By RetrievedTablecolumnslocator=mapHomePage.getLocator(columnby);
+GlobalConstants.driver.findElements(RetrievedTablecolumnslocator);
+List<String> headerlist=Tablecolumnsheaderlist(RetrievedTablecolumnslocator);
+for(int i=0;i<headerlist.size();i++){
+	if(headerlist.get(i).equalsIgnoreCase(columnname)){
+		columnnumber=i;
+		break;
+	}
+}
+int rowcount=Tablecount(RetrievedTablerowslocator);
+for(int j=0;j<rowcount;j++){
+rowvalus.add(GlobalConstants.driver.findElement(By.xpath("//table[@class='tlist']//tbody[1]/tr[j+1]/td[columnnumber+1]")).getText());
+}
+
+
+return rowvalus;
+}
+
+/******************************************************************************************
+* functionName:Tablecolumnsheaderlist
+* designed by:fareeda
+* Description:To get table columns as list
+* ******************************************************************************************/
+
+public synchronized  List<String> Tablecolumnsheaderlist(By locator)throws IOException{
+
+try{
+List<String> columnheader=new ArrayList();
+List<WebElement> tablecolumns=GlobalConstants.driver.findElements(locator);
+for (int i=0;i<tablecolumns.size();i++){
+	columnheader.add(tablecolumns.get(i).getText());
+}
+return columnheader;
+
+}catch(Exception e){
+//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"),"Exception while getting table column list"+" -Log from threadId: " + Thread.currentThread().getId());
+System.out.println("Exception while getting table column list");
+Print_Util.logError("Exception while getting table column list");
+ResultClass.testStatus(false);
+return null;
+}
+
+
+}
+
+/******************************************************************************************
+* functionName:Navigationdetailvalidation
+* designed by:fareeda
+* Description:To verify navigation details
+* ******************************************************************************************/
+
+public synchronized  void Navigationdetailvalidation(By locator)throws IOException{
+String navigation=GlobalConstants.driver.findElement(locator).getText();
+if (navigation.toString().contains(GlobalConstants.SMenuName)){
+System.out.println("Navigation details are displayed successfully "+navigation );	
+Print_Util.logMessage("Navigation details are displayed successfully "+navigation);
+ResultClass.testStatus(true);
+//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),"Navigation details are displayed successfully "+navigation,"pass");
+//ExtentTestManager.getTest().log(LogStatus.PASS,testdataMap.get("TestCaseDescription"),"Navigation details are displayed successfully "+navigation+" -Log from threadId: " + Thread.currentThread().getId());
+
+}else{
+
+System.out.println("Navigation details are not displayed successfully "+navigation);
+Print_Util.logError("Navigation details are not displayed successfully "+navigation);
+ResultClass.testStatus(false);
+//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),"Navigation details are displayed as "+navigation,"Fail");
+//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"),"Navigation details are displayed as "+navigation+" -Log from threadId: " + Thread.currentThread().getId());
+}
+
+}
+
+
+/******************************************************************************************
+* functionName:Navigationdetailvalidation
+* designed by:fareeda
+* Description:To verify navigation details
+* ******************************************************************************************/
+
+public synchronized  void Navigationdetailvalidation(By locator,String navigatoinvalue)throws Exception{
+	GlobalConstants.driver.switchTo().defaultContent();
+	By MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);	
+String navigation=GlobalConstants.driver.findElement(locator).getText();
+if (navigation.contains(navigatoinvalue)){
+System.out.println("Navigation details are displayed successfully "+navigation );	
+Print_Util.logMessage("Navigation details are displayed successfully "+navigation);
+ResultClass.testStatus(true);
+//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),"Navigation details are displayed successfully "+navigation,"pass");
+//ExtentTestManager.getTest().log(LogStatus.PASS,testdataMap.get("TestCaseDescription"),"Navigation details are displayed successfully "+navigation+" -Log from threadId: " + Thread.currentThread().getId());
+
+}else{
+
+System.out.println("Navigation details are not displayed successfully "+navigation);
+Print_Util.logError("Navigation details are not displayed successfully "+navigation);
+ResultClass.testStatus(false);
+//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),"Navigation details are displayed as "+navigation,"Fail");
+//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"),"Navigation details are displayed as "+navigation+" -Log from threadId: " + Thread.currentThread().getId());
+}
+
+}
+
+
+/******************************************************************************************
+* functionName:ToClickObjectAndCancelWindowPopUP
+* designed by:fareeda
+* Description:To cancel window pop up
+* ******************************************************************************************/
+public synchronized  void ToClickObjectAndCancelWindowPopUP(By locator,By frame,String comment)throws IOException{
+try{
+Thread.sleep(50);
+GlobalConstants.driver.switchTo().defaultContent();
+WaitUntilObjectExist(frame);
+SwitchFramebyname(frame);	
+WaitUntilObjectExist(locator);
+Thread.sleep(50);
+GlobalConstants.driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+try{
+GlobalConstants.driver.findElement(locator).sendKeys("\n");
+}
+catch(NoSuchElementException e){
+	System.out.println("No such Element exists"+e);
+	Print_Util.logError("No such Element exists"+e);
+	 ResultClass.testStatus(false);
+	//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"),"No such Element exists"+e+" -Log from threadId: " + Thread.currentThread().getId());
+}
+
+
+
+Thread.sleep(100);
+GlobalConstants.driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+
+Process p = Runtime.getRuntime().exec(System.getProperty("user.dir")+"/Downloads/cancelwindowpopup.exe");
+//Process p = Runtime.getRuntime().exec(System.getProperty("user.dir")+"/AutoIT/cancelwindowpopup.exe");
+Windowpopupverify(p, comment);
+}catch(Exception e){
+System.out.println("Exception while cancel "+comment +" "+e);
+Print_Util.logError("Exception while cancel "+comment +" "+e);
+ResultClass.testStatus(false);
+//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"),"Exception while cancel "+comment +" "+e+" -Log from threadId: " + Thread.currentThread().getId());
+}
+
+
+}
+
+
+/******************************************************************************************
+* functionName:ToClickObjectAndCancelWindowPopUP
+* designed by:fareeda
+* Description:To verify window pop up
+* 
+* ******************************************************************************************/
+public synchronized  void clickonobjectandverifywindow(int var,By locator,By frame,String parentwindow,String Windowname)throws Exception{
+try{
+
+Thread.sleep(100);
+GlobalConstants.driver.switchTo().defaultContent();
+WaitUntilObjectExist( frame);
+SwitchFramebyname(frame);
+
+WaitUntilObjectExist(locator);
+Thread.sleep(50);
+GlobalConstants.driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+//GlobalConstants.driver.findElement(Printiconlocator).sendKeys("\n");
+
+try{
+GlobalConstants.driver.findElement(locator).sendKeys("\n");
+}catch(NoSuchElementException e){
+	System.out.println(GlobalConstants.driver.findElement(locator)+ " Element does not Exists");
+	Print_Util.logError(GlobalConstants.driver.findElement(locator)+ " Element does not Exists");
+	 ResultClass.testStatus(false);
+	//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),GlobalConstants.driver.findElement(locator)+ " Element does not Exists","Fail");
+	//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"),GlobalConstants.driver.findElement(locator)+ " Element does not Exists" +" -Log from threadId: " + Thread.currentThread().getId());
+}
+
+Thread.sleep(100);
+WainUntilSecondWindowExist();
+
+SwitchMultipleWindow(parentwindow);
+
+
+
+//get title
+if (GlobalConstants.driver.getTitle().contains(Windowname)){
+	System.out.println(Windowname+ " Window is displayed");
+	Print_Util.logMessage(Windowname+ " Window is displayed");
+	 ResultClass.testStatus(true);
+	//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),Windowname+ " Window is displayed","pass");
+	//ExtentTestManager.getTest().log(LogStatus.PASS,testdataMap.get("TestCaseDescription"),Windowname+" Window is displayed" +" -Log from threadId: " + Thread.currentThread().getId());
+}
+else{
+	System.out.println(GlobalConstants.driver.getTitle()+ " Window is displayed");
+	Print_Util.logError(GlobalConstants.driver.getTitle()+ " Window is displayed");
+	 ResultClass.testStatus(false);
+	//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),GlobalConstants.driver.getTitle()+ " Window is displayed","Fail");
+	//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"),GlobalConstants.driver.getTitle()+" Window is displayed" +" -Log from threadId: " + Thread.currentThread().getId());
+}
+	
+Thread.sleep(300);
+//GlobalConstants.driver.close();
+DriverClose(Windowname); 
+Thread.sleep(100);
+SwitchWindow(parentwindow);
+
+}catch(Exception e){
+System.out.println("Window is not displayed "+e);
+Print_Util.logError("Window is not displayed "+e);
+ResultClass.testStatus(false);
+//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),"Window is not displayed "+e,"Fail");
+//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"),"Window is not displayed "+e +" -Log from threadId: " + Thread.currentThread().getId());
+GlobalConstants.driver.quit();
+System.setProperty("FailStatus", "1");
+
+}
+
+
+}
+
+
+/******************************************************************************************
+* functionName:ToClickObjectAndCancelWindowPopUP
+* designed by:fareeda
+* Description:To verify window pop up
+* @throws Exception 
+* ******************************************************************************************/
+public synchronized  void clickonobjectandverifywindowwithsendkeys(By locator,By frame,String parentwindow,String Windowname)throws Exception{
+try{
+
+Thread.sleep(500);
+GlobalConstants.driver.switchTo().defaultContent();
+WaitUntilObjectExist(frame);
+SwitchFramebyname( frame);
+
+WaitUntilObjectExist(locator);
+Thread.sleep(50);
+parentwindow=GlobalConstants.driver.getWindowHandle();
+GlobalConstants.driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+GlobalConstants.driver.findElement(locator).sendKeys("\n");
+
+
+//clickjs(GlobalConstants.driver,testdataMap, SubtestdataMap,locator);
+
+Thread.sleep(100);
+WainUntilSecondWindowExist();
+
+SwitchMultipleWindow(parentwindow);
+
+
+GlobalConstants.driver.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS);
+//get title
+String Actualtitle=GlobalConstants.driver.getTitle();
+if (GlobalConstants.driver.getTitle().contains(Windowname)){
+	System.out.println(Windowname+ " Window is displayed");
+Print_Util.logMessage(Windowname+ " Window is displayed");
+ResultClass.testStatus(true);
+	//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),Windowname+ " Window is displayed","pass");
+	//ExtentTestManager.getTest().log(LogStatus.PASS,testdataMap.get("TestCaseDescription"),Windowname+ " Window is displayed"+" -Log from threadId: " + Thread.currentThread().getId());
+}
+else{
+	System.out.println(GlobalConstants.driver.getTitle()+ " Window is displayed");
+	Print_Util.logError(GlobalConstants.driver.getTitle()+ " Window is displayed");
+	 ResultClass.testStatus(false);
+	//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),Actualtitle+ " Window is displayed","fail");
+	//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"),Actualtitle+ " Window is displayed"+" -Log from threadId: " + Thread.currentThread().getId());
+
+}
+	
+Thread.sleep(300);
+if(GlobalConstants.STestCaseName.contains("VOIPPERFORMANCECPUMEMORYSTATS")){
+	By Refreshlocator=mapHomePage.getLocator("RefreshButton");	
+WaitUntilObjectExist(Refreshlocator);
+GlobalConstants.driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+GlobalConstants.driver.findElement(locator).sendKeys("\n");
+//click(Refreshlocator);
+
+Thread.sleep(30);
+}
+//GlobalConstants.driver.close();
+DriverClose(Windowname);
+Thread.sleep(100);
+SwitchWindow(parentwindow);
+
+}catch(Exception e){
+System.out.println("Window is not displayed "+e);
+Print_Util.logError("Window is not displayed "+e);
+ResultClass.testStatus(false);
+//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),Windowname+ "Window is not displayed "+e,"fail");
+//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"),Windowname+ "Window is not displayed "+e+" -Log from threadId: " + Thread.currentThread().getId());
+GlobalConstants.driver.quit();
+System.setProperty("FailStatus", "1");
+
+}
+
+
+}
+
+
+/******************************************************************************************
+* functionName:ToClickObjectAndCancelWindowPopUP
+* designed by:fareeda
+* Description:To verify window pop up
+* @throws Exception 
+* ******************************************************************************************/
+public synchronized  void clickonobjectandverifywindow(By locator,By frame,String parentwindow,String Windowname)throws Exception{
+try{
+
+Thread.sleep(1000);
+GlobalConstants.driver.switchTo().defaultContent();
+WaitUntilObjectExist(frame);
+SwitchFramebyname( frame);
+
+WaitUntilObjectExist(locator);
+Thread.sleep(50);
+//driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+//driver.findElement(locator).sendKeys("\n");
+
+
+click(locator);
+
+Thread.sleep(1000);
+WainUntilSecondWindowExist();
+
+SwitchMultipleWindow(parentwindow);
+Thread.sleep(1000);
+
+
+//get title
+String Actualtitle=GlobalConstants.driver.getTitle();
+if (GlobalConstants.driver.getTitle().contains(Windowname)){
+	System.out.println(Windowname+ " Window is displayed");
+	Print_Util.logMessage(Windowname+ " Window is displayed");
+	 ResultClass.testStatus(true);
+	//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),Windowname+ " Window is displayed","pass");
+	//ExtentTestManager.getTest().log(LogStatus.PASS,testdataMap.get("TestCaseDescription"),Windowname+ " Window is displayed"+" -Log from threadId: " + Thread.currentThread().getId());
+}
+else{
+	System.out.println(GlobalConstants.driver.getTitle()+ " Window is displayed");
+	Print_Util.logError(GlobalConstants.driver.getTitle()+ " Window is displayed");
+	 ResultClass.testStatus(false);
+	//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),Actualtitle+ " Window is displayed","fail");
+	//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"),Actualtitle+ " Window is displayed"+" -Log from threadId: " + Thread.currentThread().getId());
+}
+	
+Thread.sleep(300);
+//driver.close();
+DriverClose(Windowname);
+Thread.sleep(100);
+SwitchWindow(parentwindow);
+
+}catch(Exception e){
+System.out.println("Window is not displayed "+e);
+Print_Util.logError("Window is not displayed "+e);
+ResultClass.testStatus(false);
+//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),Windowname+ "Window is not displayed "+e,"fail");
+//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"),Windowname+ "Window is not displayed "+e+" -Log from threadId: " + Thread.currentThread().getId());
+GlobalConstants.driver.quit();
+System.setProperty("FailStatus", "1");
+
+}
+
+
+}
+/******************************************************************************************
+* functionName:Validateclearbutton
+* designed by:fareeda
+* Description:To validate clear button
+* ******************************************************************************************/
+
+public synchronized  void Validateclearbutton(By locator,String value,By frame)throws IOException{
+try{
+
+Thread.sleep(100);
+GlobalConstants.driver.switchTo().defaultContent();
+WaitUntilObjectExist(frame);
+SwitchFramebyname(frame);
+//select any selectbox
+//KeyWordActions.selectDropdown(driver,locator ,"value-"+value);
+Thread.sleep(50);
+//click on clear button
+By Clearbuttonlocator=mapHomePage.getLocator("Clearbutton");
+WaitUntilObjectExist(Clearbuttonlocator);
+Thread.sleep(50);
+clickjs(Clearbuttonlocator);
+
+//validate the selectbox value
+Thread.sleep(50);
+if(ValidateDropDownValue(locator,value)){
+	System.out.println("clear button has reset the values");
+	Print_Util.logMessage("clear button has reset the values");
+	 ResultClass.testStatus(true);
+	//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"), "clear button has reset the values","pass");
+	//ExtentTestManager.getTest().log(LogStatus.PASS,testdataMap.get("TestCaseDescription"),"clear button has reset the values"+" -Log from threadId: " + Thread.currentThread().getId());
+	
+}else{
+	
+	System.out.println("clear button has not reset the values");
+	Print_Util.logError("clear button has not reset the values");
+	 ResultClass.testStatus(false);
+	//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),"clear button has not  reset the values","fail");
+	//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"),"clear button has not  reset the values"+" -Log from threadId: " + Thread.currentThread().getId());
+}
+	
+
+
+}catch(Exception e){
+
+}
+
+
+}
+
+public synchronized  void Validateclearbuttonbyindex(By locator,int index,By frame)throws IOException{
+try{
+
+Thread.sleep(100);
+GlobalConstants.driver.switchTo().defaultContent();
+WaitUntilObjectExist(frame);
+SwitchFramebyname(frame);
+//select any selectbox
+//KeyWordActions.selectDropdown(driver,locator ,"value-"+value);
+Thread.sleep(50);
+//click on clear button
+By Clearbuttonlocator=mapHomePage.getLocator("Clearbutton");
+WaitUntilObjectExist(Clearbuttonlocator);
+Thread.sleep(50);
+clickjs(Clearbuttonlocator);
+
+
+
+//validate the selectbox value
+Thread.sleep(50);
+String selectedval=GetSelectedvalue(locator);
+Thread.sleep(50);
+if(GetValueOfTheGivenIndexInSelectBox(locator,index).contains(selectedval)){
+	System.out.println("clear button has reset the values");
+	Print_Util.logMessage("clear button has reset the values");
+	 ResultClass.testStatus(true);
+	//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"), "clear button has reset the values","pass");
+//	ExtentTestManager.getTest().log(LogStatus.PASS,testdataMap.get("TestCaseDescription"),"clear button has reset the values"+" -Log from threadId: " + Thread.currentThread().getId());
+	
+}else{
+	
+	System.out.println("clear button has not reset the values");
+	Print_Util.logError("clear button has not reset the values");
+	 ResultClass.testStatus(false);
+	//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),"clear button has not  reset the values","fail");
+	//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"),"clear button has not  reset the values"+" -Log from threadId: " + Thread.currentThread().getId());
+}
+	
+
+
+}catch(Exception e){
+
+}
+
+
+}
+
+
+
+
+
+/******************************************************************************************
+* functionName:SBCSubModuleVerify
+* designed by:fareeda
+* Description:To select SBCmodule and verify all the artifacts
+* ******************************************************************************************/
+
+public synchronized  void SBCSubModuleVerify()throws Exception{
+
+String parentwindow=GlobalConstants.driver.getWindowHandle();
+ By NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+ By MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+
+try{	
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	//validating navigation details
+	NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+	Navigationdetailvalidation(NavigationDetailslocator);
+	//validating clear button
+	By SBCRegionselectboxlocator=mapHomePage.getLocator("SBCRegionselectbox");
+	WaitUntilObjectExist(SBCRegionselectboxlocator);
+	Validateclearbutton(SBCRegionselectboxlocator,"Select Region",MiddleFramelocator);
+	//switch to frame
+	GlobalConstants.driver.switchTo().defaultContent();
+	SwitchFramebyname(MiddleFramelocator);
+	//selecting boxes
+	//select network type
+	
+	By SBCNetworkselectboxlocator=mapHomePage.getLocator("SBCNetworkselectbox");
+	selectDropdown(SBCNetworkselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("NETWORKTYPE"));
+	Thread.sleep(20);
+	//select region
+			 SBCRegionselectboxlocator=mapHomePage.getLocator("SBCRegionselectbox");
+			selectDropdown(SBCRegionselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("REGION"));
+			Thread.sleep(20);
+			//selectsubregion
+			By SBCsubRegionNameselectboxlocator=mapHomePage.getLocator("SBCsubRegionNameselectbox");
+			selectDropdown(SBCsubRegionNameselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("SUBREGION"));
+			Thread.sleep(20);
+			
+			//nodehub
+			By SBCNodeselectboxlocator=mapHomePage.getLocator("SBCNodeselectbox");
+			selectDropdown(SBCNodeselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("NODEHUB"));
+			Thread.sleep(20);
+
+			
+	By searchbuttonlocator=mapHomePage.getLocator("searchbutton");
+	
+	WaitUntilObjectExist(searchbuttonlocator);
+	click(searchbuttonlocator);
+	Thread.sleep(100);
+	
+	//validating tablecolumns
+	
+	By RetrievedTablecolumnslocator=mapHomePage.getLocator("RetrievedTablecolumns");
+	WaitUntilObjectExist(RetrievedTablecolumnslocator);
+	validatingTablecolumnList(RetrievedTablecolumnslocator);
+	
+	
+	//validate alert is displayed when radio button is unchecked
+	////click on view chart button and validate pop up
+	Thread.sleep(1000);
+	By SBCViewChartButtonlocator=mapHomePage.getLocator("SBCViewChartButton");
+	click(SBCViewChartButtonlocator);
+	
+	Thread.sleep(100);
+	
+	
+	//click on history chart and validate pop up
+	Thread.sleep(1000);
+	By SBCHistoryChartlocator=mapHomePage.getLocator("SBCHistoryChart");
+	click( SBCHistoryChartlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept("select validation pop up ");
+	
+	//click on hourly chart button and validate pop up
+	Thread.sleep(1000);
+	WaitUntilObjectExist(SBCViewChartButtonlocator);
+    click(SBCViewChartButtonlocator);
+	Thread.sleep(100);
+	
+	By SBCHourlyChartlocator=mapHomePage.getLocator("SBCHourlyChart");
+	click( SBCHourlyChartlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+	
+	
+	//click on hourly details and validate pop up
+	Thread.sleep(1000);
+	By SBCShowHourlyDetailslocator=mapHomePage.getLocator("SBCShowHourlyDetails");
+	click( SBCShowHourlyDetailslocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+			
+	//click on performance history button and validate pop up
+	Thread.sleep(1000);
+	By SBCSShowPerformanceHistorylocator=mapHomePage.getLocator("SBCSShowPerformanceHistory");
+	click( SBCSShowPerformanceHistorylocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+	
+	
+	Thread.sleep(1000);
+	//click on radio button
+	By columnradiobuttonslocator=mapHomePage.getLocator("columnradiobuttons");
+	//GlobalConstants.driver.findElements(columnradiobuttonslocator).size();
+	click( columnradiobuttonslocator);
+	Thread.sleep(1000);
+	
+	//clickon chart buttons and verify chart windows
+	
+	Performchartwindowvalidation(parentwindow );
+	Thread.sleep(1000);
+	//validate csv pdf excel help
+	PerformCSVEXCELPDFHELPPRINTEXPORTAction(parentwindow);
+	}
+	catch(Exception e){
+		System.out.println("Exception thrown is "+e);	
+		Print_Util.logError("Exception thrown is "+e);
+		 ResultClass.testStatus(false);
+		//ExtentTestManager.getTest().log(LogStatus.FAIL, testdataMap.get("TestCaseDescription"),"Exception thrown is "+e+ " -Log from threadId: " + Thread.currentThread().getId());
+	}
+
+}
+
+/******************************************************************************************
+* functionName:EthernetStatsSubModuleVerify
+* designed by:fareeda
+* Description:To select EthernetStatsSubModuleVerify and verify all the artifacts
+* ******************************************************************************************/
+
+public synchronized  void EthernetStatsSubModuleVerify()throws Exception{
+
+String parentwindow=GlobalConstants.driver.getWindowHandle();
+ By NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+ By MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+
+try{	
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	//validating navigation details
+	NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+	Navigationdetailvalidation(NavigationDetailslocator);
+	//validating clear button
+	By SBCRegionselectboxlocator=mapHomePage.getLocator("SBCRegionselectbox");
+	WaitUntilObjectExist(SBCRegionselectboxlocator);
+	Validateclearbutton(SBCRegionselectboxlocator,"All",MiddleFramelocator);
+	//switch to frame
+	GlobalConstants.driver.switchTo().defaultContent();
+	SwitchFramebyname(MiddleFramelocator);
+	//selecting boxes
+	
+	//select region
+			 SBCRegionselectboxlocator=mapHomePage.getLocator("SBCRegionselectbox");
+			selectDropdown(SBCRegionselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("REGION"));
+			Thread.sleep(20);
+			//selectsubregion
+			By Nameselectboxlocator=mapHomePage.getLocator("Nameselectbox");
+			selectDropdown(Nameselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("NAME"));
+			Thread.sleep(20);
+			
+			//selecting date
+			parentwindow=GlobalConstants.driver.getWindowHandle();
+			By datepickerlocator=mapHomePage.getLocator("datepicker");
+			clickjs( datepickerlocator);
+			Thread.sleep(20);
+			
+			Datepicker( parentwindow,GlobalConstants.SubtestdataMap.get("SummaryDate"));
+			GlobalConstants.driver.switchTo().defaultContent();
+			MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+			SwitchFramebyname(MiddleFramelocator);
+            
+
+			
+	By searchbuttonlocator=mapHomePage.getLocator("searchbutton");
+	
+	WaitUntilObjectExist(searchbuttonlocator);
+	click(searchbuttonlocator);
+	Thread.sleep(100);
+	
+	//validating tablecolumns
+	
+	By RetrievedTablecolumnslocator=mapHomePage.getLocator("RetrievedTablecolumns");
+	WaitUntilObjectExist(RetrievedTablecolumnslocator);
+	validatingTablecolumnList(RetrievedTablecolumnslocator);
+	
+	
+	//validate alert is displayed when radio button is unchecked
+	////click on view chart button and validate pop up
+	Thread.sleep(1000);
+	
+	
+	
+	//click on show history and validate pop up
+	Thread.sleep(1000);
+	By ShowHistoryButtonlocator=mapHomePage.getLocator("ShowHistoryButton");
+	click( ShowHistoryButtonlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+	
+	
+	
+	Thread.sleep(1000);
+	//click on radio button
+	By columnradiobuttonslocator=mapHomePage.getLocator("columnradiobuttons");
+	//GlobalConstants.driver.findElements(columnradiobuttonslocator).size();
+	click( columnradiobuttonslocator);
+	Thread.sleep(1000);
+	
+	//clickon chart buttons and verify chart windows
+	Thread.sleep(1000);
+	ShowHistoryButtonlocator=mapHomePage.getLocator("ShowHistoryButton");
+	click(ShowHistoryButtonlocator);
+	Thread.sleep(500);
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	By BackButtonlocator=mapHomePage.getLocator("reportsBackButton");
+	WaitUntilObjectExist(BackButtonlocator);
+	
+	//navigation validation
+	NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+	Navigationdetailvalidation(NavigationDetailslocator,GlobalConstants.SubtestdataMap.get("Historypagepagenavigationdetails"));
+	click( BackButtonlocator);
+	WaitUntilObjectExist(ShowHistoryButtonlocator);
+	Thread.sleep(1000);
+	//validate csv pdf excel help
+	PerformCSVEXCELPDFHELPPRINTEXPORTAction(parentwindow);
+	}
+	catch(Exception e){
+		System.out.println("Exception thrown is "+e);
+		Print_Util.logError("Exception thrown is "+e);
+		 ResultClass.testStatus(false);
+		//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"), "Exception thrown is "+e+ " -Log from threadId: " + Thread.currentThread().getId());
+	}
+
+}
+
+/******************************************************************************************
+* functionName:STPUtilizationReportSubModuleVerify
+* designed by:fareeda
+* Description:To select STPUtilizationReportSubModuleVerify and verify all the artifacts
+* ******************************************************************************************/
+
+public synchronized  void STPUtilizationReportSubModuleVerify()throws Exception{
+
+String parentwindow=GlobalConstants.driver.getWindowHandle();
+ By NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+ By MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+
+try{	
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	//validating navigation details
+	NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+	Navigationdetailvalidation(NavigationDetailslocator);
+	//validating clear button
+	By Nameselectboxlocator=mapHomePage.getLocator("Nameselectbox");
+	WaitUntilObjectExist(Nameselectboxlocator);
+	Validateclearbutton(Nameselectboxlocator,"All",MiddleFramelocator);
+	//switch to frame
+	GlobalConstants.driver.switchTo().defaultContent();
+	SwitchFramebyname(MiddleFramelocator);
+	//selecting boxes
+	
+	//select Custom radio button
+	
+	By CustomReportRadioButtonlocator=mapHomePage.getLocator("CustomReportRadioButton");
+	By SummaryDateselectboxlocator=mapHomePage.getLocator("SummaryDateselectbox");
+	SelectRadioButton(CustomReportRadioButtonlocator);
+	WaitUntilObjectExist(SummaryDateselectboxlocator);
+	WaitUntilObjectExist(SummaryDateselectboxlocator);
+	WaitUntilObjectExist(SummaryDateselectboxlocator);
+	Thread.sleep(20);
+			
+			//selectsubregion
+			Nameselectboxlocator=mapHomePage.getLocator("Nameselectbox");
+			selectDropdown(Nameselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("NAME"));
+			Thread.sleep(20);
+			
+			//selecting date
+			parentwindow=GlobalConstants.driver.getWindowHandle();
+			SummaryDateselectboxlocator=mapHomePage.getLocator("SummaryDateselectbox");
+			selectDropdown(SummaryDateselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("SummaryDate"));
+			Thread.sleep(20);
+            
+
+			
+	By searchbuttonlocator=mapHomePage.getLocator("searchbutton");
+	
+	WaitUntilObjectExist(searchbuttonlocator);
+	click(searchbuttonlocator);
+	Thread.sleep(100);
+	
+	//validating tablecolumns
+	
+	By RetrievedTablecolumnslocator=mapHomePage.getLocator("RetrievedTablecolumns");
+	WaitUntilObjectExist(RetrievedTablecolumnslocator);
+	validatingTablecolumnList(RetrievedTablecolumnslocator);
+	
+	
+	//validate alert is displayed when radio button is unchecked
+	////click on view chart button and validate pop up
+	Thread.sleep(1000);
+	
+	
+	
+	//click on show history and validate pop up
+	Thread.sleep(1000);
+	By CPUViewChartButtonlocator=mapHomePage.getLocator("CPUViewChartButton");
+	click( CPUViewChartButtonlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+	
+	
+	
+	Thread.sleep(1000);
+	//click on radio button
+	By columnradiobuttonslocator=mapHomePage.getLocator("columnradiobuttons");
+	//GlobalConstants.driver.findElements(columnradiobuttonslocator).size();
+	click( columnradiobuttonslocator);
+	Thread.sleep(1000);
+	
+	//clickon chart buttons and verify chart windows
+	Thread.sleep(1000);
+	CPUViewChartButtonlocator=mapHomePage.getLocator("CPUViewChartButton");
+	clickonobjectandverifywindow(CPUViewChartButtonlocator,MiddleFramelocator,parentwindow,GlobalConstants.SubtestdataMap.get("ViewChartWindow"));
+	Thread.sleep(1000);
+	
+	
+	
+	//validate csv pdf excel help
+	PerformCSVEXCELPDFHELPPRINTEXPORTAction(parentwindow);
+	}
+	catch(Exception e){
+		System.out.println("Exception thrown is "+e);	
+		Print_Util.logError("Exception thrown is "+e);
+		 ResultClass.testStatus(false);
+		//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"), "Exception thrown is "+e+ " -Log from threadId: " + Thread.currentThread().getId());
+	}
+
+}
+
+
+/******************************************************************************************
+* functionName:SBCSubModuleVerify
+* designed by:fareeda
+* Description:To select SBCmodule and verify all the artifacts
+* ******************************************************************************************/
+
+public synchronized  void ChassisServerCallRateSubModuleVerify()throws Exception{
+
+String parentwindow=GlobalConstants.driver.getWindowHandle();
+ By NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+ By MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+
+try{	
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	//validating navigation details
+	NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+	Navigationdetailvalidation(NavigationDetailslocator);
+	//validating clear button
+	By SBCRegionselectboxlocator=mapHomePage.getLocator("SBCRegionselectbox");
+	WaitUntilObjectExist(SBCRegionselectboxlocator);
+	Validateclearbutton(SBCRegionselectboxlocator,"All",MiddleFramelocator);
+	//switch to frame
+	GlobalConstants.driver.switchTo().defaultContent();
+	SwitchFramebyname(MiddleFramelocator);
+	//selecting boxes
+	
+	//select region
+			 SBCRegionselectboxlocator=mapHomePage.getLocator("SBCRegionselectbox");
+			selectDropdown(SBCRegionselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("REGION"));
+			Thread.sleep(20);
+			//selectsubregion
+			By Nameselectboxlocator=mapHomePage.getLocator("Nameselectbox");
+			selectDropdown(Nameselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("NAME"));
+			Thread.sleep(20);
+			
+			//selecting date
+			parentwindow=GlobalConstants.driver.getWindowHandle();
+			By datepickerlocator=mapHomePage.getLocator("datepicker");
+			clickjs( datepickerlocator);
+			Thread.sleep(400);
+			
+			Datepicker(parentwindow,GlobalConstants.SubtestdataMap.get("SummaryDate"));
+			GlobalConstants.driver.switchTo().defaultContent();
+			MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+			SwitchFramebyname(MiddleFramelocator);
+            
+
+			
+	By searchbuttonlocator=mapHomePage.getLocator("searchbutton");
+	
+	WaitUntilObjectExist(searchbuttonlocator);
+	click(searchbuttonlocator);
+	Thread.sleep(100);
+	
+	//validating tablecolumns
+	
+	By RetrievedTablecolumnslocator=mapHomePage.getLocator("RetrievedTablecolumns");
+	WaitUntilObjectExist(RetrievedTablecolumnslocator);
+	validatingTablecolumnList(RetrievedTablecolumnslocator);
+	
+	
+	//validate alert is displayed when radio button is unchecked
+	////click on view chart button and validate pop up
+	Thread.sleep(1000);
+	
+	
+	
+	//click on show history and validate pop up
+	Thread.sleep(1000);
+	By ShowHistoryButtonlocator=mapHomePage.getLocator("ShowHistoryButton");
+	click( ShowHistoryButtonlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+	
+	//click on congestion stats button
+	Thread.sleep(1000);
+	By ShowCongestionStatsButtonlocator=mapHomePage.getLocator("ShowCongestionStatsButton");
+	click(ShowCongestionStatsButtonlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+	
+
+	//click on System stats button
+	By ShowSystemStatsButtonlocator=mapHomePage.getLocator("ShowSystemStatsButton");
+	//GlobalConstants.driver.findElement(By.xpath("//input[contains(@value,'Show History' )]")).isDisplayed();
+	click( ShowSystemStatsButtonlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+	Thread.sleep(1000);
+	//click on radio button
+	By columnradiobuttonslocator=mapHomePage.getLocator("columnradiobuttons");
+	//GlobalConstants.driver.findElements(columnradiobuttonslocator).size();
+	click( columnradiobuttonslocator);
+	Thread.sleep(1000);
+	
+	//clickon chart buttons and verify chart windows
+	Thread.sleep(1000);
+	ShowHistoryButtonlocator=mapHomePage.getLocator("ShowHistoryButton");
+	
+	clickonobjectandverifywindow(ShowHistoryButtonlocator,MiddleFramelocator,parentwindow,GlobalConstants.SubtestdataMap.get("ShowHistoryWindow"));
+	Thread.sleep(500);
+	
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	By BackButtonlocator=mapHomePage.getLocator("reportsBackButton");
+	click( BackButtonlocator);
+	WaitUntilObjectExist(ShowHistoryButtonlocator);
+	Thread.sleep(100);
+	
+	////clickon congestion buttons and verify chart windows
+	
+			Thread.sleep(1000);
+			ShowCongestionStatsButtonlocator=mapHomePage.getLocator("ShowCongestionStatsButton");
+			click( ShowCongestionStatsButtonlocator);
+			Thread.sleep(500);
+			GlobalConstants.driver.switchTo().defaultContent();
+			MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+			SwitchFramebyname(MiddleFramelocator);
+			BackButtonlocator=mapHomePage.getLocator("reportsBackButton");
+			WaitUntilObjectExist(BackButtonlocator);
+			
+			//navigation validation
+			NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+			Navigationdetailvalidation(NavigationDetailslocator,GlobalConstants.SubtestdataMap.get("CongestionNavigationdetails"));
+			click( BackButtonlocator);
+			WaitUntilObjectExist(ShowHistoryButtonlocator);
+			Thread.sleep(1000);
+			
+	//click on sysytemstats button
+			Thread.sleep(1000);
+			ShowSystemStatsButtonlocator=mapHomePage.getLocator("ShowSystemStatsButton");
+			click( ShowSystemStatsButtonlocator);
+			Thread.sleep(500);
+			GlobalConstants.driver.switchTo().defaultContent();
+			MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+			SwitchFramebyname(MiddleFramelocator);
+			BackButtonlocator=mapHomePage.getLocator("reportsBackButton");
+			WaitUntilObjectExist(BackButtonlocator);
+			
+			//navigation validation
+			NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+			Navigationdetailvalidation(NavigationDetailslocator,GlobalConstants.SubtestdataMap.get("SystemStatsNavigationdetails"));
+			click( BackButtonlocator);
+			WaitUntilObjectExist(ShowHistoryButtonlocator);
+			Thread.sleep(1000);
+	
+	
+	//validate csv pdf excel help
+	PerformCSVEXCELPDFHELPPRINTEXPORTAction(parentwindow);
+	}
+	catch(Exception e){
+		System.out.println("Exception thrown is "+e);	
+		Print_Util.logError("Exception thrown is "+e);
+		 ResultClass.testStatus(false);
+		//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"), "Exception thrown is "+e+ " -Log from threadId: " + Thread.currentThread().getId());
+	}
+
+}
+
+public synchronized  void ClickonviewcharbuttonandAccept()throws Exception{
+
+GlobalConstants.driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+By CPUViewChartButtontlocator=mapHomePage.getLocator("CPUViewChartButton");
+try{
+if (GlobalConstants.driver.findElement(CPUViewChartButtontlocator).isDisplayed()){
+click( CPUViewChartButtontlocator);
+Thread.sleep(100);
+isAlertPresentAndAccept( "select validation pop up ");
+}}catch(Exception e){
+try{
+By MidPlaneViewDetailsButtonlocator=mapHomePage.getLocator("MidPlaneViewDetailsButton");
+if (GlobalConstants.driver.findElement(MidPlaneViewDetailsButtonlocator).isDisplayed()){
+	click( MidPlaneViewDetailsButtonlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");	
+}}catch(Exception Ex){
+	
+By LicenseshowDetailsbuttonlocator=mapHomePage.getLocator("LicenseshowDetailsbutton");
+click( LicenseshowDetailsbuttonlocator);	
+Thread.sleep(100);
+isAlertPresentAndAccept( "select validation pop up ");
+}}
+
+}
+
+
+public synchronized  void ClickonviewcharbuttonandValidate()throws Exception{
+GlobalConstants.driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+String parentwindow=GlobalConstants.driver.getWindowHandle();
+By MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+By ShowHistoryButtonlocator=mapHomePage.getLocator("ShowHistoryButton");
+try{
+By CPUViewChartButtontlocator=mapHomePage.getLocator("CPUViewChartButton");
+if (GlobalConstants.driver.findElement(CPUViewChartButtontlocator).isDisplayed()){
+fnHighlightMe(GlobalConstants.driver.findElement(CPUViewChartButtontlocator));
+clickonobjectandverifywindow(CPUViewChartButtontlocator,MiddleFramelocator,parentwindow,GlobalConstants.SubtestdataMap.get("ViewChartWindow"));
+}}catch(Exception e){
+
+try{
+	
+
+By LicenseshowDetailsbuttonlocator=mapHomePage.getLocator("LicenseshowDetailsbutton");
+	if (GlobalConstants.driver.findElement(LicenseshowDetailsbuttonlocator).isDisplayed()){
+	
+fnHighlightMe(GlobalConstants.driver.findElement(LicenseshowDetailsbuttonlocator));
+click( LicenseshowDetailsbuttonlocator);
+GlobalConstants.driver.switchTo().defaultContent();
+MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+SwitchFramebyname(MiddleFramelocator);
+WaitUntilObjectExist(MiddleFramelocator);
+By BackButtonlocator=mapHomePage.getLocator("reportsBackButton");
+WaitUntilObjectExist(BackButtonlocator);
+By NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+Navigationdetailvalidation(NavigationDetailslocator,GlobalConstants.SubtestdataMap.get("Detailspagenavigationdetails"));
+Thread.sleep(20);
+click( BackButtonlocator);
+WaitUntilObjectExist(ShowHistoryButtonlocator);
+}}catch(Exception Ex){
+	try{
+	By MidPlaneViewDetailsButtonlocator=mapHomePage.getLocator("MidPlaneViewDetailsButton");
+	if (GlobalConstants.driver.findElement(MidPlaneViewDetailsButtonlocator).isDisplayed()){
+	
+fnHighlightMe(GlobalConstants.driver.findElement(MidPlaneViewDetailsButtonlocator));
+click( MidPlaneViewDetailsButtonlocator);
+GlobalConstants.driver.switchTo().defaultContent();
+MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+SwitchFramebyname(MiddleFramelocator);
+WaitUntilObjectExist(MiddleFramelocator);
+By BackButtonlocator=mapHomePage.getLocator("reportsBackButton");
+WaitUntilObjectExist(BackButtonlocator);
+By NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+Navigationdetailvalidation(NavigationDetailslocator,GlobalConstants.SubtestdataMap.get("ViewDetailsNavigationdetails"));
+Thread.sleep(20);
+click( BackButtonlocator);
+WaitUntilObjectExist(ShowHistoryButtonlocator);
+
+	}
+	}catch(Exception x){}
+
+}}
+}
+
+/******************************************************************************************
+* functionName:SBCSubModuleVerify
+* designed by:fareeda
+* Description:To select SBCmodule and verify all the artifacts
+* ******************************************************************************************/
+
+public synchronized  void BusyHourCPSSubModuleVerify()throws Exception{
+
+String parentwindow=GlobalConstants.driver.getWindowHandle();
+ By NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+ By MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+
+try{	
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	//validating navigation details
+	NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+	Navigationdetailvalidation(NavigationDetailslocator);
+	//validating clear button
+	By Networkselectboxlocator=mapHomePage.getLocator("Networkselectbox");
+	WaitUntilObjectExist(Networkselectboxlocator);
+	Validateclearbutton(Networkselectboxlocator,"All",MiddleFramelocator);
+	//switch to frame
+	GlobalConstants.driver.switchTo().defaultContent();
+	SwitchFramebyname(MiddleFramelocator);
+	//selecting boxes
+	
+	//select region
+	Networkselectboxlocator=mapHomePage.getLocator("Networkselectbox");
+			selectDropdown(Networkselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("NETWORK"));
+			Thread.sleep(20);
+			//selectsubregion
+			By Nameselectboxlocator=mapHomePage.getLocator("Nameselectbox");
+			GlobalConstants.driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+			try{
+			if (GlobalConstants.driver.findElement(Nameselectboxlocator).isDisplayed()){
+			
+			selectDropdown(Nameselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("SWITCH"));
+			Thread.sleep(20);
+			}}catch(Exception e){};
+			//selectsubregion
+			By SummaryDateselectboxlocator=mapHomePage.getLocator("SummaryDateselectbox");
+			selectDropdown(SummaryDateselectboxlocator,"value-"+GlobalConstants.SubtestdataMap.get("SummaryDate"));
+			Thread.sleep(20);
+			
+	By searchbuttonlocator=mapHomePage.getLocator("searchbutton");
+	
+	WaitUntilObjectExist(searchbuttonlocator);
+	click(searchbuttonlocator);
+	Thread.sleep(100);
+	
+	//validating tablecolumns
+	
+	By RetrievedTablecolumnslocator=mapHomePage.getLocator("RetrievedTablecolumns");
+	WaitUntilObjectExist(RetrievedTablecolumnslocator);
+	validatingTablecolumnList(RetrievedTablecolumnslocator);
+	
+	
+	//validate alert is displayed when radio button is unchecked
+	////click on view chart button and validate pop up
+	Thread.sleep(1000);
+	
+	
+	
+	//click on show history and validate pop up
+	Thread.sleep(1000);
+	By ShowHistoryButtonlocator=mapHomePage.getLocator("ShowHistoryButton");
+	click( ShowHistoryButtonlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+	
+	//click on view chart button and validate pop up
+	ClickonviewcharbuttonandAccept();
+	GlobalConstants.driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+	
+	Thread.sleep(1000);
+	//click on radio button
+	By columnradiobuttonslocator=mapHomePage.getLocator("columnradiobuttons");
+	//GlobalConstants.driver.findElements(columnradiobuttonslocator).size();
+	click( columnradiobuttonslocator);
+	Thread.sleep(1000);
+	//clickon chart buttons and verify chart windows
+	Thread.sleep(1000);
+	ShowHistoryButtonlocator=mapHomePage.getLocator("ShowHistoryButton");
+	clickonobjectandverifywindow(ShowHistoryButtonlocator,MiddleFramelocator,parentwindow,GlobalConstants.SubtestdataMap.get("ShowHistoryWindow"));
+	Thread.sleep(500);
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	By BackButtonlocator=mapHomePage.getLocator("reportsBackButton");
+	click( BackButtonlocator);
+	WaitUntilObjectExist(ShowHistoryButtonlocator);
+	Thread.sleep(100);
+	////clickon view chart buttons and verify chart windows
+	Thread.sleep(1000);
+	ClickonviewcharbuttonandValidate( );
+	Thread.sleep(1000);
+	GlobalConstants.driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+	//validate csv pdf excel help
+	PerformCSVEXCELPDFHELPPRINTEXPORTAction(parentwindow);
+	}
+	catch(Exception e){
+		System.out.println("Exception thrown is "+e);	
+		Print_Util.logError("Exception thrown is "+e);
+		 ResultClass.testStatus(false);
+		//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"), "Exception thrown is "+e+ " -Log from threadId: " + Thread.currentThread().getId());
+	}
+
+}
+
+
+/******************************************************************************************
+* functionName:SBCSubModuleVerify
+* designed by:fareeda
+* Description:To select SBCmodule and verify all the artifacts
+* ******************************************************************************************/
+
+public synchronized  void DPTNodeActiveUsageSubModuleVerify()throws Exception{
+
+String parentwindow=GlobalConstants.driver.getWindowHandle();
+ By NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+ By MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+
+try{	
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	//validating navigation details
+	NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+	Navigationdetailvalidation(NavigationDetailslocator);
+	//validating clear button
+	By Nameselectboxlocator=mapHomePage.getLocator("Nameselectbox");
+	WaitUntilObjectExist(Nameselectboxlocator);
+	Validateclearbutton(Nameselectboxlocator,"All",MiddleFramelocator);
+	//switch to frame
+	GlobalConstants.driver.switchTo().defaultContent();
+	SwitchFramebyname(MiddleFramelocator);
+	//selecting boxes
+	
+	
+			//selectswitch
+			Nameselectboxlocator=mapHomePage.getLocator("Nameselectbox");
+			GlobalConstants.driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+			
+			
+			selectDropdown(Nameselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("SWITCH"));
+			Thread.sleep(20);
+			
+			//selectsubregion
+			By SummaryDateselectboxlocator=mapHomePage.getLocator("SummaryDateselectbox");
+			selectDropdown(SummaryDateselectboxlocator,"value-"+GlobalConstants.SubtestdataMap.get("SummaryDate"));
+			Thread.sleep(20);
+			
+	By searchbuttonlocator=mapHomePage.getLocator("searchbutton");
+	
+	WaitUntilObjectExist(searchbuttonlocator);
+	click(searchbuttonlocator);
+	Thread.sleep(100);
+	
+	//validating tablecolumns
+	
+	By RetrievedTablecolumnslocator=mapHomePage.getLocator("RetrievedTablecolumns");
+	WaitUntilObjectExist(RetrievedTablecolumnslocator);
+	validatingTablecolumnList(RetrievedTablecolumnslocator);
+	
+	
+	//validate alert is displayed when radio button is unchecked
+	////click on view chart button and validate pop up
+	Thread.sleep(1000);
+	
+	
+	
+	//click on show history and validate pop up
+	Thread.sleep(1000);
+	By ShowHistoryButtonlocator=mapHomePage.getLocator("ShowHistoryButton");
+	fnHighlightMe(GlobalConstants.driver.findElement(ShowHistoryButtonlocator));
+	click( ShowHistoryButtonlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+	
+	//click on view details and validate pop up
+			Thread.sleep(1000);
+			By CPUViewChartButtonlocator=mapHomePage.getLocator("CPUViewChartButton");
+			fnHighlightMe(GlobalConstants.driver.findElement(CPUViewChartButtonlocator));
+			click( CPUViewChartButtonlocator);
+			Thread.sleep(100);
+			isAlertPresentAndAccept( "select validation pop up ");
+			//click on show details and validate pop up
+			Thread.sleep(1000);
+			By LicenseshowDetailsbuttonlocator=mapHomePage.getLocator("DPTShowDetailsbutton");
+			fnHighlightMe(GlobalConstants.driver.findElement(LicenseshowDetailsbuttonlocator));
+			click( LicenseshowDetailsbuttonlocator);
+			Thread.sleep(100);
+			isAlertPresentAndAccept( "select validation pop up ");
+			
+	Thread.sleep(1000);
+	//click on radio button
+	By columnradiobuttonslocator=mapHomePage.getLocator("columnradiobuttons");
+	//GlobalConstants.driver.findElements(columnradiobuttonslocator).size();
+	click( columnradiobuttonslocator);
+	Thread.sleep(1000);
+	//clickon chart buttons and verify chart windows
+	Thread.sleep(1000);
+	ShowHistoryButtonlocator=mapHomePage.getLocator("ShowHistoryButton");
+	//clickonobjectandverifywindow(ShowHistoryButtonlocator,MiddleFramelocator,parentwindow,GlobalConstants.SubtestdataMap.get("ShowHistoryWindow"));
+	fnHighlightMe(GlobalConstants.driver.findElement(ShowHistoryButtonlocator));
+	click( ShowHistoryButtonlocator);
+	Thread.sleep(500);
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	By BackButtonlocator=mapHomePage.getLocator("reportsBackButton");
+	WaitUntilObjectExist(BackButtonlocator);
+	//validate navigation
+	NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+	Navigationdetailvalidation(NavigationDetailslocator,GlobalConstants.SubtestdataMap.get("ShowHistorypagenavigationdetails"));
+	click( BackButtonlocator);
+	WaitUntilObjectExist(ShowHistoryButtonlocator);
+	Thread.sleep(100);
+	////clickon view chart buttons and verify chart windows
+	Thread.sleep(1000);
+	fnHighlightMe(GlobalConstants.driver.findElement(CPUViewChartButtonlocator));
+	clickonobjectandverifywindow(CPUViewChartButtonlocator,MiddleFramelocator,parentwindow,GlobalConstants.SubtestdataMap.get("ViewChartWindow"));
+	WaitUntilObjectExist(ShowHistoryButtonlocator);
+	Thread.sleep(500);
+	//ClickonviewcharbuttonandValidate( GlobalConstants.driver,testdataMap, SubtestdataMap);
+	//validateshowdetails button
+	Thread.sleep(1000);
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	LicenseshowDetailsbuttonlocator=mapHomePage.getLocator("DPTShowDetailsbutton");
+	fnHighlightMe(GlobalConstants.driver.findElement(LicenseshowDetailsbuttonlocator));
+	click( LicenseshowDetailsbuttonlocator);
+	Thread.sleep(500);
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	BackButtonlocator=mapHomePage.getLocator("reportsBackButton");
+	WaitUntilObjectExist(BackButtonlocator);
+	//validate navigation
+	NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+	Navigationdetailvalidation(NavigationDetailslocator,GlobalConstants.SubtestdataMap.get("ShowDetailspagenavigationdetails"));
+	click( BackButtonlocator);
+	WaitUntilObjectExist(ShowHistoryButtonlocator);
+	Thread.sleep(100);
+	
+	
+	//validate csv pdf excel help
+	PerformCSVEXCELPDFHELPPRINTEXPORTAction(parentwindow);
+	}
+	catch(Exception e){
+		System.out.println("Exception thrown is "+e);
+		Print_Util.logError("Exception thrown is "+e);
+		 ResultClass.testStatus(false);
+	//	ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"), "Exception thrown is "+e+ " -Log from threadId: " + Thread.currentThread().getId());
+	}
+
+}
+
+/******************************************************************************************
+* functionName:SBCSubModuleVerify
+* designed by:fareeda
+* Description:To select SBCmodule and verify all the artifacts
+* ******************************************************************************************/
+
+public synchronized  void CPUAndMemoryStatsSubModuleVerify()throws Exception{
+String parentwindow=GlobalConstants.driver.getWindowHandle();
+ By NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+ By MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+
+try{	
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	//validating navigation details
+	NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+	Navigationdetailvalidation(NavigationDetailslocator);
+	//validating clear button
+	By SBCRegionselectboxlocator=mapHomePage.getLocator("SBCRegionselectbox");
+	WaitUntilObjectExist(SBCRegionselectboxlocator);
+	Validateclearbutton(SBCRegionselectboxlocator,"All",MiddleFramelocator);
+	//switch to frame
+	GlobalConstants.driver.switchTo().defaultContent();
+	SwitchFramebyname(MiddleFramelocator);
+	//selecting boxes
+	
+	//select region
+			SBCRegionselectboxlocator=mapHomePage.getLocator("SBCRegionselectbox");
+			selectDropdown(SBCRegionselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("REGION"));
+			Thread.sleep(100);
+			//selectsubregion
+			By Nameselectboxlocator=mapHomePage.getLocator("Nameselectbox");
+			selectDropdown(Nameselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("NAME"));
+			Thread.sleep(100);
+			
+			//selecting date
+			parentwindow=GlobalConstants.driver.getWindowHandle();
+			By datepickerlocator=mapHomePage.getLocator("datepicker");
+			clickjs( datepickerlocator);
+			Thread.sleep(500);
+			
+			Datepicker(parentwindow,GlobalConstants.SubtestdataMap.get("SummaryDate"));
+			GlobalConstants.driver.switchTo().defaultContent();
+			MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+			SwitchFramebyname(MiddleFramelocator);
+            
+
+			
+	By searchbuttonlocator=mapHomePage.getLocator("searchbutton");
+	
+	WaitUntilObjectExist(searchbuttonlocator);
+	click(searchbuttonlocator);
+	Thread.sleep(100);
+	
+	//validating tablecolumns
+	
+	By RetrievedTablecolumnslocator=mapHomePage.getLocator("RetrievedTablecolumns");
+	WaitUntilObjectExist(RetrievedTablecolumnslocator);
+	validatingTablecolumnList(RetrievedTablecolumnslocator);
+	
+	
+	//validate alert is displayed when radio button is unchecked
+	////click on view chart button and validate pop up
+	Thread.sleep(1000);
+	
+	
+	
+	//click on show history and validate pop up
+	Thread.sleep(1000);
+	By ShowHistoryButtonlocator=mapHomePage.getLocator("ShowHistoryButton");
+	click( ShowHistoryButtonlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+	
+	//click on view chart button and validate pop up
+	ClickonviewcharbuttonandAccept( );
+	GlobalConstants.driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+	
+	Thread.sleep(1000);
+	//click on radio button
+	By columnradiobuttonslocator=mapHomePage.getLocator("columnradiobuttons");
+	//GlobalConstants.driver.findElements(columnradiobuttonslocator).size();
+	click( columnradiobuttonslocator);
+	Thread.sleep(1000);
+	//clickon chart buttons and verify chart windows
+	Thread.sleep(1000);
+	ShowHistoryButtonlocator=mapHomePage.getLocator("ShowHistoryButton");
+	clickonobjectandverifywindow(ShowHistoryButtonlocator,MiddleFramelocator,parentwindow,GlobalConstants.SubtestdataMap.get("ShowHistoryWindow"));
+	Thread.sleep(500);
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	By BackButtonlocator=mapHomePage.getLocator("reportsBackButton");
+	click( BackButtonlocator);
+	WaitUntilObjectExist(ShowHistoryButtonlocator);
+	Thread.sleep(100);
+	////clickon view chart buttons and verify chart windows
+	Thread.sleep(1000);
+	ClickonviewcharbuttonandValidate();
+	Thread.sleep(1000);
+	GlobalConstants.driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+	//validate csv pdf excel help
+	PerformCSVEXCELPDFHELPPRINTEXPORTAction(parentwindow);
+	}
+	catch(Exception e){
+		System.out.println("Exception thrown is "+e);	
+		Print_Util.logError("Exception thrown is "+e);
+		 ResultClass.testStatus(false);
+		//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"), "Exception thrown is "+e+ " -Log from threadId: " + Thread.currentThread().getId());
+	}
+
+}
+
+
+
+
+public synchronized  void LORManagementSubModuleVerify()throws Exception{
+
+String parentwindow=GlobalConstants.driver.getWindowHandle();
+ By NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+ By MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+
+try{	
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	//validating navigation details
+	NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+	Navigationdetailvalidation(NavigationDetailslocator);
+	//validating clear button
+	By DateTypeSelectboxlocator=mapHomePage.getLocator("DateTypeSelectbox");
+	WaitUntilObjectExist(DateTypeSelectboxlocator);
+	Validateclearbutton(DateTypeSelectboxlocator,"Received",MiddleFramelocator);
+	//switch to frame
+	GlobalConstants.driver.switchTo().defaultContent();
+	SwitchFramebyname(MiddleFramelocator);
+	//selecting boxes
+	//select network type
+	
+	By LORversionsselectboxlocator=mapHomePage.getLocator("LORversionsselectbox");
+	selectDropdown(LORversionsselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("LORversion"));
+	Thread.sleep(20);
+	//select region
+	 By LORVersionStatusSelectboxlocator=mapHomePage.getLocator("LORVersionStatusSelectbox");
+			selectDropdown(LORVersionStatusSelectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("LORStatus"));
+			Thread.sleep(20);
+			//selectsubregion
+			DateTypeSelectboxlocator=mapHomePage.getLocator("DateTypeSelectbox");
+			selectDropdown(DateTypeSelectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("LORDatetype"));
+			Thread.sleep(20);
+			
+	
+	By searchbuttonlocator=mapHomePage.getLocator("searchbutton");
+	
+	WaitUntilObjectExist(searchbuttonlocator);
+	click(searchbuttonlocator);
+	Thread.sleep(100);
+	
+	//validating tablecolumns
+	
+	By RetrievedTablecolumnslocator=mapHomePage.getLocator("RetrievedTablecolumns");
+	WaitUntilObjectExist(RetrievedTablecolumnslocator);
+	Thread.sleep(100);
+	validatingTablecolumnList(RetrievedTablecolumnslocator);
+	
+	//validate alert is displayed when radio button is unchecked
+	
+	
+	//click on get details button and validate pop up
+	Thread.sleep(1000);
+	By GetDetailsButtonlocator=mapHomePage.getLocator("GetDetailsButton");
+	click( GetDetailsButtonlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+
+	Thread.sleep(1000);
+	//click on radio button
+	By columnradiobuttonslocator=mapHomePage.getLocator("columnradiobuttons");
+	//GlobalConstants.driver.findElements(columnradiobuttonslocator).size();
+	click( columnradiobuttonslocator);
+	Thread.sleep(1000);
+	
+	//clickon getdetails buttons and verify  windows
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	GetDetailsButtonlocator=mapHomePage.getLocator("GetDetailsButton");
+	click( GetDetailsButtonlocator);
+	Thread.sleep(100);
+	
+			GlobalConstants.driver.switchTo().defaultContent();
+			WaitUntilObjectExist(MiddleFramelocator);
+			SwitchFramebyname(MiddleFramelocator);
+			By BackButtonlocator=mapHomePage.getLocator("LORBackbutton");
+			WaitUntilObjectExist(BackButtonlocator);
+			NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+			Navigationdetailvalidation(NavigationDetailslocator,GlobalConstants.SubtestdataMap.get("Getdetailspagenavigationdetails"));
+			click( BackButtonlocator);
+			Thread.sleep(100);
+			WaitUntilObjectExist(GetDetailsButtonlocator);
+			Thread.sleep(100);	
+			
+			//click on add button
+			By Addiconlocator=mapHomePage.getLocator("Addicon");
+			click( Addiconlocator);
+			Thread.sleep(100);
+			GlobalConstants.driver.switchTo().defaultContent();
+			WaitUntilObjectExist(MiddleFramelocator);
+			SwitchFramebyname(MiddleFramelocator);
+			By LORAddbuttonlocator=mapHomePage.getLocator("LORAddbutton");
+			click( LORAddbuttonlocator);
+			Thread.sleep(100);
+			isAlertPresentAndAccept( "select validation pop up ");
+			Thread.sleep(100);
+			By LORCancelbuttonlocator=mapHomePage.getLocator("LORCancelbutton");
+			click( LORCancelbuttonlocator);
+			Thread.sleep(100);
+			WaitUntilObjectExist(GetDetailsButtonlocator);
+			Thread.sleep(1000);	
+			
+	//validate csv pdf excel help
+	PerformCSVEXCELPDFHELPPRINTEXPORTAction(parentwindow);
+	}
+	catch(Exception e){
+		System.out.println("Exception thrown is "+e);	
+		Print_Util.logError("Exception thrown is "+e);
+		 ResultClass.testStatus(false);
+		//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"), "Exception thrown is "+e+ " -Log from threadId: " + Thread.currentThread().getId());
+	}
+
+}
+
+
+
+public synchronized  void CKTUTILSubModuleVerify()throws Exception{
+
+String parentwindow=GlobalConstants.driver.getWindowHandle();
+ By NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+ By MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+
+try{	
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	//validating navigation details
+	NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+	Navigationdetailvalidation(NavigationDetailslocator);
+	//validating clear button
+	By TrafficRegionselectboxlocator=mapHomePage.getLocator("TrafficRegionselectbox");
+	WaitUntilObjectExist(TrafficRegionselectboxlocator);
+	Validateclearbutton(TrafficRegionselectboxlocator,"Select Region",MiddleFramelocator);
+	//switch to frame
+	GlobalConstants.driver.switchTo().defaultContent();
+	SwitchFramebyname(MiddleFramelocator);
+	//selecting boxes
+	//select network type
+	
+	By TrafficNetworkselectboxlocator=mapHomePage.getLocator("TrafficNetworkselectbox");
+	selectDropdown(TrafficNetworkselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("NETWORKTYPE"));
+	Thread.sleep(20);
+	//select region
+	TrafficRegionselectboxlocator=mapHomePage.getLocator("TrafficRegionselectbox");
+			selectDropdown(TrafficRegionselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("REGION"));
+			Thread.sleep(20);
+			//selectsubregion
+			By TrafficsubRegionNameselectboxlocator=mapHomePage.getLocator("TrafficsubRegionNameselectbox");
+			selectDropdown(TrafficsubRegionNameselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("SUBREGION"));
+			Thread.sleep(20);
+			//select ckt type
+			By TrafficCktTypelocator=mapHomePage.getLocator("TrafficCktType");
+			click(TrafficCktTypelocator);
+			Thread.sleep(20);
+
+			WebElement TrafficCktTypedropdownlocator=GlobalConstants.driver.findElement(By.xpath("//label[@title='"+GlobalConstants.SubtestdataMap.get("CKTTYPE")+"']"));
+			TrafficCktTypedropdownlocator.click();
+			Thread.sleep(10);
+			click(TrafficCktTypelocator);
+			Thread.sleep(20);
+			//nodehub
+			By SBCNodeselectboxlocator=mapHomePage.getLocator("SBCNodeselectbox");
+			selectDropdown(SBCNodeselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("NODEHUB"));
+			Thread.sleep(20);
+	
+	By searchbuttonlocator=mapHomePage.getLocator("searchbutton");
+	
+	WaitUntilObjectExist(searchbuttonlocator);
+	click(searchbuttonlocator);
+	Thread.sleep(100);
+	
+	//validating tablecolumns
+	
+	By RetrievedTablecolumnslocator=mapHomePage.getLocator("RetrievedTablecolumns");
+	WaitUntilObjectExist(RetrievedTablecolumnslocator);
+	Thread.sleep(100);
+	validatingTablecolumnList(RetrievedTablecolumnslocator);
+	
+	//validate alert is displayed when radio button is unchecked
+	////click on view chart button and validate pop up
+	Thread.sleep(1000);
+	By SBCViewChartButtonlocator=mapHomePage.getLocator("TrafficViewChartButton");
+	click( SBCViewChartButtonlocator);
+	Thread.sleep(100);
+	
+	//click on history chart and validate pop up
+	Thread.sleep(1000);
+	By SBCHistoryChartlocator=mapHomePage.getLocator("TrafficHistoryChart");
+	click( SBCHistoryChartlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+	
+	//click on hourly chart button and validate pop up
+	Thread.sleep(1000);
+	WaitUntilObjectExist(SBCViewChartButtonlocator);
+   click( SBCViewChartButtonlocator);
+	Thread.sleep(100);
+	
+	By SBCHourlyChartlocator=mapHomePage.getLocator("TrafficHourlyChart");
+	click( SBCHourlyChartlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+	
+			
+	//click on performance history button and validate pop up
+	Thread.sleep(1000);
+	By PVCDETAILSButtonlocator=mapHomePage.getLocator("PVCDETAILSButton");
+	click( PVCDETAILSButtonlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+	
+	
+	Thread.sleep(1000);
+	//click on radio button
+	By columnradiobuttonslocator=mapHomePage.getLocator("Trafficcolumnradiobuttons");
+	//GlobalConstants.driver.findElements(columnradiobuttonslocator).size();
+	click( columnradiobuttonslocator);
+	Thread.sleep(1000);
+	
+	//clickon chart buttons and verify chart windows
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	SBCViewChartButtonlocator=mapHomePage.getLocator("TrafficViewChartButton");
+	click( SBCViewChartButtonlocator);
+	Thread.sleep(100);
+	Performwindowvalidation(parentwindow,SBCHourlyChartlocator,GlobalConstants.SubtestdataMap.get("HourlyChartWindow"));
+			Thread.sleep(2000);
+			GlobalConstants.driver.switchTo().defaultContent();
+			WaitUntilObjectExist(MiddleFramelocator);
+			SwitchFramebyname(MiddleFramelocator);
+			SBCViewChartButtonlocator=mapHomePage.getLocator("TrafficViewChartButton");
+			click( SBCViewChartButtonlocator);
+			Thread.sleep(100);
+			Performwindowvalidation(parentwindow,SBCHistoryChartlocator,GlobalConstants.SubtestdataMap.get("Historychartwindow"));
+					Thread.sleep(3000);
+					
+					GlobalConstants.driver.switchTo().defaultContent();
+					WaitUntilObjectExist(MiddleFramelocator);
+					SwitchFramebyname(MiddleFramelocator);	
+					By BackButtonlocator=mapHomePage.getLocator("BackButton");
+					WaitUntilObjectExist(BackButtonlocator);
+					Thread.sleep(20);
+					click( BackButtonlocator);
+					WaitUntilObjectExist(SBCViewChartButtonlocator);
+					Thread.sleep(1000);
+					//click on radio button
+					
+					//GlobalConstants.driver.findElements(columnradiobuttonslocator).size();
+					click( columnradiobuttonslocator);
+					Thread.sleep(1000);
+					//click on get pvc details
+					
+					click( PVCDETAILSButtonlocator);
+					Thread.sleep(100);
+					isAlertPresentAndAccept( "select Trunk pop up ");
+					
+	//validate csv pdf excel help
+	PerformCSVEXCELPDFHELPPRINTEXPORTAction(parentwindow);
+	}
+	catch(Exception e){
+		System.out.println("Exception thrown is "+e);	
+		Print_Util.logError("Exception thrown is "+e);
+		 ResultClass.testStatus(false);
+		//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"), "Exception thrown is "+e+ " -Log from threadId: " + Thread.currentThread().getId());
+	}
+
+}
+
+
+public synchronized  void LicenseReportSubModuleVerify()throws Exception{
+
+ String parentwindow=GlobalConstants.driver.getWindowHandle();
+ By NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+ By MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+ 
+try{	
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	//validating navigation details
+	NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+	Navigationdetailvalidation(NavigationDetailslocator);
+	//validating clear button
+	By TrafficRegionselectboxlocator=mapHomePage.getLocator("licenseRegionselectbox");
+	WaitUntilObjectExist(TrafficRegionselectboxlocator);
+	Validateclearbutton(TrafficRegionselectboxlocator,"Select Region",MiddleFramelocator);
+	//switch to frame
+	GlobalConstants.driver.switchTo().defaultContent();
+	SwitchFramebyname(MiddleFramelocator);
+	//selecting boxes
+	//select network type
+	
+	By TrafficNetworkselectboxlocator=mapHomePage.getLocator("licenseNetworkselectbox");
+	selectDropdown(TrafficNetworkselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("NETWORKTYPE"));
+	Thread.sleep(20);
+	//select region
+	TrafficRegionselectboxlocator=mapHomePage.getLocator("licenseRegionselectbox");
+			selectDropdown(TrafficRegionselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("REGION"));
+			Thread.sleep(20);
+			//selectsubregion
+			By TrafficsubRegionNameselectboxlocator=mapHomePage.getLocator("licensesubRegionNameselectbox");
+			selectDropdown(TrafficsubRegionNameselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("SUBREGION"));
+			Thread.sleep(20);
+			//node hub
+			By SBCNodeselectboxlocator=mapHomePage.getLocator("licenseNodeselectbox");
+			selectDropdown(SBCNodeselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("NODEHUB"));
+			Thread.sleep(20);
+			//select License type
+			By TrafficCktTypelocator=mapHomePage.getLocator("licenseTypeselectbox");
+			GlobalConstants.driver.manage().timeouts().implicitlyWait(2, TimeUnit.SECONDS);
+			try{
+				if (GlobalConstants.driver.findElement(TrafficCktTypelocator).isDisplayed()){
+			
+			
+			selectDropdown(TrafficCktTypelocator ,"value-"+GlobalConstants.SubtestdataMap.get("LICENSETYPE"));
+			
+				}}catch(Exception e){}
+			//summary date select
+			Thread.sleep(20);
+			By licensereportDatelocator=mapHomePage.getLocator("licensereportDate");
+			selectDropdown(licensereportDatelocator ,"value-"+GlobalConstants.SubtestdataMap.get("SUMMARYDATE"));
+			Thread.sleep(20);		
+	By searchbuttonlocator=mapHomePage.getLocator("searchbutton");
+	WaitUntilObjectExist(searchbuttonlocator);
+	click(searchbuttonlocator);
+	Thread.sleep(100);
+	//validating tablecolumns
+	By RetrievedTablecolumnslocator=mapHomePage.getLocator("RetrievedTablecolumns");
+	WaitUntilObjectExist(RetrievedTablecolumnslocator);
+	Thread.sleep(100);
+	validatingTablecolumnList(RetrievedTablecolumnslocator);
+	//validate alert is displayed when radio button is unchecked
+	////click on show  button and validate pop up
+	By LicenseshowDetailsbuttonlocator=mapHomePage.getLocator("LicenseshowDetailsbutton");
+	click( LicenseshowDetailsbuttonlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+	Thread.sleep(1000);
+	//click on radio button
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	By columnradiobuttonslocator=mapHomePage.getLocator("columnradiobuttons");
+	//GlobalConstants.driver.findElements(columnradiobuttonslocator).size();
+	click( columnradiobuttonslocator);
+	Thread.sleep(1000);
+	
+	//clickon show buttons and verify 
+	
+	LicenseshowDetailsbuttonlocator=mapHomePage.getLocator("LicenseshowDetailsbutton");
+	click( LicenseshowDetailsbuttonlocator);
+	Thread.sleep(100);
+	
+//	By Waitobjectlocator=mapHomePage.getLocator("Waitobject");
+	//WaitUntilObjectExist(Waitobjectlocator);
+	//Thread.sleep(10);
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	By BackButtonlocator=mapHomePage.getLocator("reportsBackButton");
+	WaitUntilObjectExist(BackButtonlocator);
+	Thread.sleep(10);
+	click( BackButtonlocator);	
+	WaitUntilObjectExist(LicenseshowDetailsbuttonlocator);
+	
+	//validate csv pdf excel help
+	PerformCSVEXCELPDFHELPPRINTEXPORTAction(parentwindow);
+	}
+	catch(Exception e){
+		System.out.println("Exception thrown is "+e);	
+		Print_Util.logError("Exception thrown is "+e);
+		 ResultClass.testStatus(false);
+		//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"), "Exception thrown is "+e+ " -Log from threadId: " + Thread.currentThread().getId());
+	}
+
+}
+
+
+public synchronized  void ReportStatisticsSubModuleVerify()throws Exception{
+
+String parentwindow=GlobalConstants.driver.getWindowHandle();
+ By NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+ By MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+
+try{	
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	//validating navigation details
+	NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+	Navigationdetailvalidation(NavigationDetailslocator);
+	
+	//switch to frame
+	GlobalConstants.driver.switchTo().defaultContent();
+	SwitchFramebyname(MiddleFramelocator);
+	
+	Thread.sleep(100);
+	By searchbuttonlocator=mapHomePage.getLocator("searchbutton");
+	
+	WaitUntilObjectExist(searchbuttonlocator);
+	click(searchbuttonlocator);
+	Thread.sleep(100);
+	
+	//validating tablecolumns
+	
+	By RetrievedTablecolumnslocator=mapHomePage.getLocator("RetrievedTablecolumns");
+	WaitUntilObjectExist(RetrievedTablecolumnslocator);
+	validatingTablecolumnList(RetrievedTablecolumnslocator);
+	
+	
+	
+	//validate csv pdf excel help print and export
+	PerformCSVEXCELPDFHELPPRINTEXPORTAction(parentwindow);
+	}
+	catch(Exception e){
+		System.out.println("Exception thrown is "+e);	
+		Print_Util.logError("Exception thrown is "+e);
+		 ResultClass.testStatus(false);
+		//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"), "Exception thrown is "+e+ " -Log from threadId: " + Thread.currentThread().getId());
+	}
+
+}
+
+
+public synchronized  void ReportsManagementSubModuleVerify()throws Exception{
+
+String parentwindow=GlobalConstants.driver.getWindowHandle();
+ By NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+ By MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+
+try{
+	
+	GlobalConstants.driver.switchTo().defaultContent();
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	//validating navigation details
+	NavigationDetailslocator=mapHomePage.getLocator("NavigationDetails");
+	Navigationdetailvalidation(NavigationDetailslocator);
+	//validating clear button
+	By categoryselectboxlocator=mapHomePage.getLocator("categoryselectbox");
+	WaitUntilObjectExist(categoryselectboxlocator);
+	Validateclearbutton(categoryselectboxlocator,"All",MiddleFramelocator);
+	//switch to frame
+	GlobalConstants.driver.switchTo().defaultContent();
+	SwitchFramebyname(MiddleFramelocator);
+	//selecting boxes
+	//select network type
+	
+	By Reporttypeselectboxlocator=mapHomePage.getLocator("Reporttypeselectbox");
+	selectDropdown(Reporttypeselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("REPORTTYPE"));
+	Thread.sleep(20);
+	//select region
+	categoryselectboxlocator=mapHomePage.getLocator("categoryselectbox");
+			selectDropdown(categoryselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("Category"));
+			Thread.sleep(20);
+			//selectsubregion
+			By subcategorySelectboxlocator=mapHomePage.getLocator("subcategorySelectbox");
+			selectDropdown(subcategorySelectboxlocator,"value-"+GlobalConstants.SubtestdataMap.get("SUBCategory"));
+			Thread.sleep(20);
+			
+			
+	
+	By searchbuttonlocator=mapHomePage.getLocator("searchbutton");
+	
+	WaitUntilObjectExist(searchbuttonlocator);
+	click(searchbuttonlocator);
+	Thread.sleep(100);
+	
+	//validating tablecolumns
+	
+	By RetrievedTablecolumnslocator=mapHomePage.getLocator("RetrievedTablecolumns");
+	WaitUntilObjectExist(RetrievedTablecolumnslocator);
+	validatingTablecolumnList(RetrievedTablecolumnslocator);
+	
+	
+	//validate alert is displayed when radio button is unchecked
+	////click on clone button and validate pop up
+	Thread.sleep(1000);
+	By clonebuttonlocator=mapHomePage.getLocator("clonebutton");
+	click( clonebuttonlocator);
+	
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+	
+	//click on Add schedule button validate pop up
+	Thread.sleep(1000);
+	By Addschedulebuttonlocator=mapHomePage.getLocator("Addschedulebutton");
+	click( Addschedulebuttonlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+	
+	//click on show schedule button and validate pop up
+	Thread.sleep(1000);
+	By showschedulebuttonlocator=mapHomePage.getLocator("showschedulebutton");
+	WaitUntilObjectExist(showschedulebuttonlocator);
+    click( showschedulebuttonlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+	
+	//click on delete icon
+	By DeleteIconlocator=mapHomePage.getLocator("DeleteIcon");
+	click( DeleteIconlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+	
+	
+	//click on modify icon and validate pop up
+	Thread.sleep(1000);
+	By ModifyIconlocator=mapHomePage.getLocator("ModifyIcon");
+	click( ModifyIconlocator);
+	Thread.sleep(100);
+	isAlertPresentAndAccept( "select validation pop up ");
+			
+	
+	Thread.sleep(2000);
+	//click on radio button
+	By columnradiobuttonslocator=mapHomePage.getLocator("columnradiobuttons");
+	//GlobalConstants.GlobalConstants.driver.findElements(columnradiobuttonslocator).size();
+	click( columnradiobuttonslocator);
+	Thread.sleep(1000);
+	
+	//clickon on buttons and verify  windows
+	//validate clonebutton window
+	Performwindowvalidation(parentwindow,clonebuttonlocator,GlobalConstants.SubtestdataMap.get("CloneReportWindow"));
+	Thread.sleep(2000);
+	//validate add schedule window
+	Performwindowvalidation(parentwindow,Addschedulebuttonlocator,GlobalConstants.SubtestdataMap.get("Addscedulewindow"));
+	Thread.sleep(3000);
+	//validate help window
+	/*By Helpiconlocator=mapHomePage.getLocator("Helpicon");
+	Performwindowvalidation(parentwindow,Helpiconlocator,GlobalConstants.SubtestdataMap.get("HelpWindow"));
+	Thread.sleep(1000);*/
+	//validate Modifyicon window
+	Performwindowvalidation(parentwindow,ModifyIconlocator,GlobalConstants.SubtestdataMap.get("ModifyWindow"));
+	Thread.sleep(2000);
+	
+	//validate delte popup after selecting data
+	Thread.sleep(1000);
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	Thread.sleep(100);
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	click( DeleteIconlocator);
+	Thread.sleep(100);
+	isAlertPresentAndReject( "select validation pop up ");
+	
+	Thread.sleep(1000);
+	
+	//validate csv pdf excel help
+	PerformCSVEXCELPDFHELPPRINTEXPORTAction(parentwindow);
+	//validating Addicon after selecting data
+	Thread.sleep(1000);
+	MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	Thread.sleep(100);
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	By AddIconlocator=mapHomePage.getLocator("AddIcon");
+	click( AddIconlocator);
+	Thread.sleep(100);
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	By BackButtonlocator=mapHomePage.getLocator("reportsBackButton");
+	WaitUntilObjectExist(BackButtonlocator);
+	
+	selectDropdown(categoryselectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("Category"));
+	selectDropdown(subcategorySelectboxlocator ,"value-"+GlobalConstants.SubtestdataMap.get("SUBCategory"));
+	
+	By AddContinueButtonlocator=mapHomePage.getLocator("AddContinueButton");
+	click( AddContinueButtonlocator);
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	WaitUntilObjectExist(BackButtonlocator);
+	click( BackButtonlocator);
+	//agin come back
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	WaitUntilObjectExist(BackButtonlocator);
+	click( BackButtonlocator);
+	
+	
+	}
+	catch(Exception e){
+		System.out.println("Exception thrown is "+e);
+		Print_Util.logError("Exception thrown is "+e);
+		 ResultClass.testStatus(false);
+		//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"), "Exception thrown is "+e+ " -Log from threadId: " + Thread.currentThread().getId());
+	}
+
+}
+
+
+public synchronized  void Performwindowvalidation(String parentwindow,By locator,String Windowname)throws Exception{
+try{
+//click on history chart
+Thread.sleep(100);
+By MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+
+clickonobjectandverifywindowwithsendkeys(locator,MiddleFramelocator,parentwindow,Windowname);
+
+}catch(Exception e){
+System.out.println("Exception thrown is "+e);	
+Print_Util.logError("Exception thrown is "+e);
+ResultClass.testStatus(false);
+//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"), "Exception thrown is "+e+ " -Log from threadId: " + Thread.currentThread().getId());
+
+}
+}
+
+
+
+public synchronized  void Performchartwindowvalidation(String parentwindow)throws Exception{
+//verify invalid user
+try{
+	//click on history chart
+	Thread.sleep(100);
+	By MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	Thread.sleep(100);
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	
+	
+	Thread.sleep(50);
+	
+	By SBCViewChartButtonlocator=mapHomePage.getLocator("SBCViewChartButton");
+	GlobalConstants.driver.findElement(SBCViewChartButtonlocator).click();
+	
+	By SBCHistoryChartlocator=mapHomePage.getLocator("SBCHistoryChart");
+	WaitUntilObjectExist(SBCHistoryChartlocator);
+	clickonobjectandverifywindow(SBCHistoryChartlocator,MiddleFramelocator,parentwindow,GlobalConstants.SubtestdataMap.get("Historychartwindow"));
+	Thread.sleep(500);
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	/*By BackButtonlocator=mapHomePage.getLocator("BackButton");
+	WaitUntilObjectExist(BackButtonlocator);
+	click( BackButtonlocator);*/
+	//click on hourly chart
+	Thread.sleep(1000);
+	
+	SBCViewChartButtonlocator=mapHomePage.getLocator("SBCViewChartButton");
+	GlobalConstants.driver.findElement(SBCViewChartButtonlocator).click();
+	
+	By SBCHourlyChartlocator=mapHomePage.getLocator("SBCHourlyChart");
+	WaitUntilObjectExist(SBCHourlyChartlocator);
+	clickonobjectandverifywindow(SBCHourlyChartlocator,MiddleFramelocator,parentwindow,GlobalConstants.SubtestdataMap.get("HourlyChartWindow"));
+	//click on back button
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	/*WaitUntilObjectExist(BackButtonlocator);
+	click( BackButtonlocator);*/
+	
+	
+	//clickon hourly details button
+	Thread.sleep(1000);
+	By SBCShowHourlyDetailslocator=mapHomePage.getLocator("SBCShowHourlyDetails");
+	clickonobjectandverifywindow( SBCShowHourlyDetailslocator,MiddleFramelocator,parentwindow,GlobalConstants.SubtestdataMap.get("HourlyChartDetailsWindow"));		
+	//click on back button
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	By BackButtonlocator=mapHomePage.getLocator("BackButton");
+	WaitUntilObjectExist(BackButtonlocator);
+	click( BackButtonlocator);
+	
+	//Toclick on performance history as multiple window
+	Thread.sleep(1000);
+	By SBCSShowPerformanceHistorylocator=mapHomePage.getLocator("SBCSShowPerformanceHistory");
+	clickonobjectandverifywindow( 1,SBCSShowPerformanceHistorylocator,MiddleFramelocator,parentwindow,GlobalConstants.SubtestdataMap.get("PerformanceChartWindow"));
+	//to click on back button
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	BackButtonlocator=mapHomePage.getLocator("BackButton");
+	WaitUntilObjectExist(BackButtonlocator);
+	click( BackButtonlocator);
+	 
+	Thread.sleep(500);
+	
+
+}catch(Exception e){
+	
+	System.out.println("Exception thrown is "+e);	
+	Print_Util.logError("Exception thrown is "+e);
+	 ResultClass.testStatus(false);
+	//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"), "Exception thrown is "+e+ " -Log from threadId: " + Thread.currentThread().getId());
+}
+
+
+
+}
+
+
+public synchronized  void PerformCSVEXCELPDFHELPPRINTEXPORTAction(String parentwindow)throws Exception{
+//verify invalid user
+try{
+	//click on help icon
+	Thread.sleep(500);
+	
+	
+	
+	GlobalConstants.driver.switchTo().defaultContent();
+	By MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	try{
+	if (GlobalConstants.SubtestdataMap.get("NOHelpIcon").contains("1")){}}catch(Exception e){
+		By Helpiconlocator=mapHomePage.getLocator("Helpicon");
+	
+	
+	try{
+		if (GlobalConstants.driver.findElement(Helpiconlocator).isDisplayed())
+		clickonobjectandverifywindow( Helpiconlocator,MiddleFramelocator,parentwindow,GlobalConstants.SubtestdataMap.get("HelpWindow"));		
+		}catch(Exception ex){System.out.println("Help icon is not present");
+		Print_Util.logError("Help icon is not present");
+		 ResultClass.testStatus(false);}	
+	
+	
+	}	
+	//clickon print icon
+	Thread.sleep(1000);
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	
+	try{
+		if (GlobalConstants.SubtestdataMap.get("NOPrintIcon").contains("1")){}}catch(Exception ex){
+			By Printiconlocator=mapHomePage.getLocator("Printicon");
+			GlobalConstants.driver.manage().timeouts().implicitlyWait(2, TimeUnit.SECONDS);
+			try{
+			if (GlobalConstants.driver.findElement(Printiconlocator).isDisplayed())
+			clickonobjectandverifywindow( Printiconlocator,MiddleFramelocator,parentwindow,GlobalConstants.SubtestdataMap.get("PrintWindow"));		
+			}catch(Exception e){System.out.println("print icon is not present");
+			Print_Util.logError("print icon is not present");
+			 ResultClass.testStatus(false);}		
+					
+		}	
+	
+	
+	
+	
+	GlobalConstants.driver.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS);
+	//Toclick on export icon  as multiple window
+	Thread.sleep(1000);
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	By AddIconlocator=mapHomePage.getLocator("AddIcon");
+	GlobalConstants.driver.manage().timeouts().implicitlyWait(2, TimeUnit.SECONDS);
+	try{
+	if (GlobalConstants.driver.findElement(AddIconlocator).isDisplayed()){
+		}}
+	
+		
+	catch(Exception e){
+	//export icon
+	try{
+		if (GlobalConstants.SubtestdataMap.get("NOExportIcon").contains("1")){}}catch(Exception ex){
+			By Exporticonlocator=mapHomePage.getLocator("Exporticon");
+
+			try{
+			if (GlobalConstants.driver.findElement(Exporticonlocator).isDisplayed())
+			ToClickObjectAndCancelWindowPopUP(Exporticonlocator,MiddleFramelocator,"Export Window Pop Up");
+			}catch(Exception exce){System.out.println("Export icon is not present");
+			Print_Util.logError("Exporticon is not present");
+			 ResultClass.testStatus(false);}
+
+		}	
+	}
+	
+	
+		
+	GlobalConstants.driver.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS); 
+	Thread.sleep(500);
+	//click on CSV
+	Thread.sleep(100);
+	GlobalConstants.driver.manage().timeouts().implicitlyWait(2, TimeUnit.SECONDS); 
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	try{
+		if (GlobalConstants.SubtestdataMap.get("NOCSVIcon").contains("1")){}}catch(Exception e){
+			By CSVlocator=mapHomePage.getLocator("CSV");
+			try{
+				
+				if (GlobalConstants.driver.findElement(CSVlocator).isDisplayed())
+					ToClickObjectAndCancelWindowPopUP(CSVlocator,MiddleFramelocator,"CSV Window Pop Up");
+				//clickonobjectandverifywindow( 1,Exporticonlocator,MiddleFramelocator,parentwindow,GlobalConstants.SubtestdataMap.get("ExcelWindow"));
+				}catch(Exception exce){System.out.println("CSV icon is not present");
+				Print_Util.logError("CSV icon is not present");
+				 ResultClass.testStatus(false);}
+		}	
+	
+	
+	
+	
+	
+	//clickon excel
+	Thread.sleep(500);
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	
+	try{
+		if (GlobalConstants.SubtestdataMap.get("NOExcelIcon").contains("1")){}}catch(Exception e){
+			By Excellocator=mapHomePage.getLocator("Excel");
+			try{
+				if (GlobalConstants.driver.findElement(Excellocator).isDisplayed())
+					ToClickObjectAndCancelWindowPopUP(Excellocator,MiddleFramelocator,"Excel Window Pop Up");
+				//clickonobjectandverifywindow( 1,Exporticonlocator,MiddleFramelocator,parentwindow,GlobalConstants.SubtestdataMap.get("ExcelWindow"));
+				}catch(Exception exce){System.out.println("Excel icon is not present");
+				Print_Util.logError("Excel icon is not present");
+				 ResultClass.testStatus(false);}
+		}	
+	
+	
+	
+	
+	
+	
+	//click on pdf
+	Thread.sleep(500);
+	GlobalConstants.driver.switchTo().defaultContent();
+	WaitUntilObjectExist(MiddleFramelocator);
+	SwitchFramebyname(MiddleFramelocator);
+	
+	try{
+		if (GlobalConstants.SubtestdataMap.get("NOPDFcon").contains("1")){}}catch(Exception e){
+			By PDFlocator=mapHomePage.getLocator("PDF");
+			try{
+				if (GlobalConstants.driver.findElement(PDFlocator).isDisplayed())
+					ToClickObjectAndCancelWindowPopUP(PDFlocator,MiddleFramelocator,"PDF Window Pop Up");
+				//clickonobjectandverifywindow( 1,Exporticonlocator,MiddleFramelocator,parentwindow,GlobalConstants.SubtestdataMap.get("ExcelWindow"));
+				}catch(Exception exce){System.out.println("PDF icon is not present");
+				Print_Util.logError("PDF icon is not present");
+				 ResultClass.testStatus(false);}
+		}	
+	
+	
+	
+	
+
+
+}
+	catch(Exception e){
+	System.out.println("Exception is thrown "+e);
+	Print_Util.logError("Exception is thrown "+e);
+	 ResultClass.testStatus(false);
+	//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"), "Exception thrown is "+e+ " -Log from threadId: " + Thread.currentThread().getId());
+}
+GlobalConstants.driver.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS);
+}
+
+public synchronized  void validatingTablecolumnList(By locator)throws IOException{
+
+//validating tablecolumns
+		try{
+		int match =0;
+		
+		List<String> ActualTablecolumns=Tablecolumnsheaderlist( locator);
+		String[] expectedtableolumns=GlobalConstants.SubtestdataMap.get("Tablecolumns").split("<>");
+		for (int i=0;i<expectedtableolumns.length;i++){
+			
+			GlobalConstants.driver.findElement(By.xpath("//table[@class='tlist']")).isDisplayed();
+			for(int j=0;j<ActualTablecolumns.size();j++){
+				
+			if (ActualTablecolumns.get(j).toString().toUpperCase().contains(expectedtableolumns[i].toString().toUpperCase())){
+				System.out.println(expectedtableolumns[i] +" is exist");
+				Print_Util.logMessage(expectedtableolumns[i] +" is exist");
+				 ResultClass.testStatus(true);
+				//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),expectedtableolumns[i] +" is exist","pass");
+				//ExtentTestManager.getTest().log(LogStatus.PASS,testdataMap.get("TestCaseDescription"),expectedtableolumns[i] +" is exist"+" -Log from threadId: " + Thread.currentThread().getId());
+				match=1;
+				break;
+			}
+			}
+			
+			if (match==0){
+				System.out.println(expectedtableolumns[i] +" does not exist");
+				Print_Util.logError(expectedtableolumns[i] +" does not exist");
+				 ResultClass.testStatus(false);
+				//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),expectedtableolumns[i] +" does not exist","pass");
+				//ExtentTestManager.getTest().log(LogStatus.PASS,testdataMap.get("TestCaseDescription"),expectedtableolumns[i] +" does not exist"+" -Log from threadId: " + Thread.currentThread().getId());
+			}
+			match=0;	
+				
+		
+	
+		}
+		}
+		catch(Exception e)
+		{
+			System.out.println("Exception is thrown "+e);
+			Print_Util.logError("Exception is thrown "+e);
+			 ResultClass.testStatus(false);
+		//	ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"), "Exception thrown is "+e+ " -Log from threadId: " + Thread.currentThread().getId());
+		}
+
+		}
+
+public synchronized String Getmonth(String Monthinstring)throws IOException{
+String Month="1";
+Monthinstring=Monthinstring.trim();
+switch(Monthinstring){
+case "January":
+	Month="1";
+	break;
+case "February":
+	Month="2";
+	break;
+case "March":
+	Month="3";
+	break;
+case "April":
+	Month="4";
+	break;
+case "May":
+	Month="5";
+	break;
+case "June":
+	Month="6";
+	break;
+case "July":
+	Month="7";
+	break;
+case "August":
+	Month="8";
+	break;
+case "September":
+	Month="9";
+	break;
+case "October":
+	Month="10";
+	break;
+case "November":
+	Month="11";
+	break;
+case "December":
+	Month="12";
+	break;
+
+}
+
+
+
+return Month;	
+}
+
+
+public   void CompareMonth(int actaulMonth,int GivenMonth)throws Exception{
+By NextMonthlocator=mapHomePage.getLocator("NextMonth");
+By PreviousMonthlocator=mapHomePage.getLocator("PreviousMonth");
+
+if (actaulMonth>GivenMonth){
+	
+	int iteratingMonths=(actaulMonth-GivenMonth)%1000;
+	for(int i=0;i<iteratingMonths;i++){
+	Thread.sleep(100);
+	clickjs(PreviousMonthlocator);
+	Thread.sleep(100);
+	}
+	
+}else if(actaulMonth<GivenMonth){
+	int iteratingMonths=(GivenMonth-actaulMonth)%1000;
+	for(int i=0;i<iteratingMonths;i++){
+	Thread.sleep(100);
+	clickjs(NextMonthlocator);
+	Thread.sleep(100);
+}
+}
+
+
+}
+
+
+public   void CompareYear(int actaulYear,int GivenYear)throws Exception{
+
+By NextYearlocator=mapHomePage.getLocator("NextYear");
+By PreviousYearlocator=mapHomePage.getLocator("PreviousYear");
+
+
+
+if (actaulYear>GivenYear){
+	int iteratingyears=(actaulYear-GivenYear)%1000;
+	
+	for(int i=0;i<iteratingyears;i++){
+	Thread.sleep(50);
+	clickjs(PreviousYearlocator );
+	Thread.sleep(50);
+	}
+	
+}else if(actaulYear<GivenYear){
+	int iteratingyears=(GivenYear-actaulYear)%1000;
+	for(int i=0;i<iteratingyears;i++){
+	Thread.sleep(50);
+	clickjs(NextYearlocator );
+	Thread.sleep(50);
+	}
+}
+	
+System.out.println();
+}
+
+
+
+
+public   void Datepicker(String parentwindow,String DateToselect)throws IOException{
+
+//validating tablecolumns
+		try{
+			
+			String Monthindigit;
+			String Monthday;
+			String Monthyear;
+			
+			Thread.sleep(1000);
+			GlobalConstants.driver.switchTo().defaultContent();
+			SwitchMultipleWindow(parentwindow);
+			Thread.sleep(200);
+			//String DateToselect="9/11/2012";
+			String[] splitteddatearray=DateToselect.split("/");
+			if (splitteddatearray.length!=3){
+				System.out.println("The given date is not in valid date format");
+				Print_Util.logDebug("The given date is not in valid date format");
+				//ExtentTestManager.getTest().log(LogStatus.PASS,testdataMap.get("TestCaseDescription"),"The given date is not in valid date format"+" -Log from threadId: " + Thread.currentThread().getId());
+			}
+				else{
+				String	givenMonth=splitteddatearray[0];
+				String	givenDate=splitteddatearray[1];
+				String	givenYear=splitteddatearray[2];
+			
+			//comparing month and year
+				//getmonthyear from table
+			By MonthYearValuelocator=mapHomePage.getLocator("MonthYearValue");
+				
+			Monthyear=GlobalConstants.driver.findElement(MonthYearValuelocator).getText();
+			String[] ActualmonthyearArray=Monthyear.split(" ");
+			;
+			//slecting right year
+			CompareYear(Integer.parseInt(ActualmonthyearArray[1]),Integer.parseInt(givenYear));
+			//selecting right month
+			Monthindigit=Getmonth( ActualmonthyearArray[0]) ;
+			CompareMonth(Integer.parseInt(Monthindigit),Integer.parseInt(givenMonth));
+		
+		    //selecting rgt date
+			Thread.sleep(100);
+			
+			WebElement element=GlobalConstants.driver.findElement(By.xpath("//table[@class='clsOTable']//table[1]/tbody//tr//font[text()='"+givenDate+"']/.."));
+			Thread.sleep(20);
+			click( element);
+			
+		/*	List<WebElement> Elements=GlobalConstants.driver.findElements(By.xpath("//table[@class='clsOTable']//table[1]/tbody//tr//font"));
+			
+				for (int i=0;i<Elements.size();i++){
+					Elements.get(i).getText();
+					if (Elements.get(i).getText().equals(givenDate))
+						click( Elements.get(i));
+					
+				}*/
+				
+			
+			Thread.sleep(100);	
+				
+			SwitchWindow(parentwindow);	
+				}
+		
+		}
+		catch(Exception e)
+		{
+			System.out.println("Exception is thrown "+e);
+			Print_Util.logError("Exception is thrown "+e);
+			 ResultClass.testStatus(false);
+			//ExtentTestManager.getTest().log(LogStatus.FAIL,testdataMap.get("TestCaseDescription"),"Exception is thrown "+e+" -Log from threadId: " + Thread.currentThread().getId());
+		}
+
+		}
+
+
+
+public  WebDriver Backendlogin()throws Exception{
+	GlobalConstants.driver.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS);
+	System.out.println("testcasedescription:"+GlobalConstants.STestDescription);
+	Print_Util.logDebug("testcasedescription:"+GlobalConstants.STestDescription);
+	try{
+	//initiating Webdriver
+	//GlobalConstants.driver=SelectDriver();
+	
+
+	//fetching object from Object repositories
+	By usernamelocator=mapfileLogin.getLocator("usernameTextfield");
+	
+	//login username
+	WaitUntilObjectExist(usernamelocator);
+	
+	SendKeys(usernamelocator,System.getProperty("user.name").toLowerCase());
+	
+	//login password
+	By passworlocator=mapfileLogin.getLocator("passwordTextfield");
+	WaitUntilObjectExist(passworlocator);
+	Thread.sleep(10);
+	SendKeys(passworlocator,GlobalConstants.VPlanbackendPassword);
+	
+	//click on signon button
+	By Signonbuttonlocator=mapfileLogin.getLocator("Signonbutton");
+	WebElement Signonbutton=GlobalConstants.driver.findElement(Signonbuttonlocator);
+	WaitUntilObjectExist(Signonbuttonlocator);
+	
+	clickjs( Signonbuttonlocator);
+	
+	
+	//click on alert
+	//if (!RuntimeConfigs.getconfigValue("GlobalConstants.driver").toUpperCase().contains("CHROME")){
+	int i=0;
+	while(i++<20){
+	alertaccept();
+	}
+	
+	Thread.sleep(500);
+	GlobalConstants.driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+	By InvalidUsericonlocator=mapfileLogin.getLocator("InvalidUsericon");
+	try{
+	if (GlobalConstants.driver.findElement(InvalidUsericonlocator).isDisplayed()){
+		
+		//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),"Login is not Successfull","FAIL");	
+		//ExtentTestManager.getTest().log(LogStatus.FAIL, testdataMap.get("TestCaseDescription"),"Login is not Successfull"+" -Log from threadId: " + Thread.currentThread().getId());
+	}else{
+		//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),"Login is Successfull","PASS");
+		//ExtentTestManager.getTest().log(LogStatus.PASS, testdataMap.get("TestCaseDescription"),"Login is Successfull"+" -Log from threadId: " + Thread.currentThread().getId());
+	}}catch(Exception e){
+		
+		//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),"Login is Successfull","PASS");
+		//ExtentTestManager.getTest().log(LogStatus.PASS,testdataMap.get("TestCaseDescription"), "Login is Successfull"+ " -Log from threadId: " + Thread.currentThread().getId());
+	}
+	finally{
+		return GlobalConstants.driver;
+	}
+	}catch(Exception e){
+		System.out.println("Exception is thrown" +e);
+		Print_Util.logError("Exception is thrown" +e);
+		 ResultClass.testStatus(false);
+		// ExtentTestManager.getTest().log(LogStatus.FAIL, testdataMap.get("TestCaseDescription"),"Exception is thrown" +e+" -Log from threadId: " + Thread.currentThread().getId());
+	}
+	finally{
+		return GlobalConstants.driver;
+	}
+	
+}
+
+
+
+public synchronized void SelectModule()throws Exception{
+	Thread.sleep(500);
+	//checking invalid user page is displayed
+	try{
+	GlobalConstants.driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+	By InvalidUsericonlocator=mapfileLogin.getLocator("InvalidUsericon");
+	if (GlobalConstants.driver.findElement(InvalidUsericonlocator).isDisplayed()){
+		System.out.println("Invaliduser page is displayed ");
+		Print_Util.logError("Invaliduser page is displayed ");
+		 ResultClass.testStatus(false);
+		//WriteDataInToExcel("Reports",testdataMap.get("TestcaseID"),testdataMap.get("TestCaseDescription"),"Invalid page is displayed","FAIL");	
+		//ExtentTestManager.getTest().log(LogStatus.FAIL, testdataMap.get("TestCaseDescription"),"Invalid page is displayed"+ " -Log from threadId: " + Thread.currentThread().getId());
+		return;
+	}}catch(Exception e){
+		//System.out.println("Exception is thrown "+e);
+	}
+	
+	GlobalConstants.driver.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS);
+	
+	if (GlobalConstants.SubtestdataMap.get("projectname").toUpperCase().contains("VPLAN")){
+		GlobalConstants.driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+		try{
+      By Vplanradiobuttonlocator=mapfileLogin.getLocator("Vplanradiobutton");
+	if (GlobalConstants.driver.findElement(Vplanradiobuttonlocator).isDisplayed()){
+	//select vplan radio button
+	
+	WaitUntilObjectExist(Vplanradiobuttonlocator);
+	Thread.sleep(100);
+	SelectRadioButton(Vplanradiobuttonlocator);
+	
+	//click submit button
+	Thread.sleep(100);
+	By SubmitButtonlocator=mapfileLogin.getLocator("SubmitButton");
+	
+	WaitUntilObjectExist(SubmitButtonlocator);
+	click(SubmitButtonlocator);
+	}
+		}catch(Exception ex){}
+	Thread.sleep(500);
+	//for chrome pop ups handling
+	/*if (RuntimeConfigs.getconfigValue("GlobalConstants.driver").toUpperCase().contains("IE")){
+	int i=0;
+	while(i++<20){
+	KeyWordActions.alertaccept(GlobalConstants.driver);
+	}
+	}*/
+	
+	//switching frame
+	if (!GlobalConstants.Driver.toUpperCase().contains("CHROME")){
+	By TopFramelocator=mapHomePage.getLocator("TopFrame");
+	SwitchFramebyname(TopFramelocator);
+	Thread.sleep(100);
+	//click on switchappbutton
+	
+	By SwitchAppiconlocator=mapHomePage.getLocator("SwitchAppicon");
+	WaitUntilObjectExist(SwitchAppiconlocator);
+	String parentwindow=GlobalConstants.driver.getWindowHandle();
+	click(SwitchAppiconlocator);
+	Thread.sleep(2000);
+	GlobalConstants.driver.switchTo().defaultContent();
+
+	
+	//switch window
+	SwitchMultipleWindow(parentwindow);
+	//click on the module name	
+
+	WebElement Moduleval= GlobalConstants.driver.findElement(By.name(GlobalConstants.SubtestdataMap.get("modulename"))); 
+	Moduleval.click();
+	SwitchWindow(parentwindow);
+	//alert accept
+		//second alert
+		/*	int i=0;
+			while(i++<20){
+			KeyWordActions.alertaccept(GlobalConstants.driver);
+			}*/
+	//wait for the module page
+	By MiddleFramelocator=mapHomePage.getLocator("MiddleFrame");
+	SwitchFramebyname(MiddleFramelocator);
+	switch(GlobalConstants.SubtestdataMap.get("modulename").toUpperCase()) {
+	   case "VOIP" :
+	      // validating voip page is displayed
+		   By Voipiconlocator=mapHomePage.getLocator("Voipicon");
+			WaitUntilObjectExist(Voipiconlocator);
+			GlobalConstants.driver.switchTo().defaultContent();
+			
+	      break; 
+	   default : // Optional
+	      
+	}
+
+	}
+	
+	}
+}
+
+public  void SelectByCheckbox(By object,String ToSelect)throws Exception{
+	
+	Thread.sleep(1);
+	WaitUntilObjectExist(object);
+clickjs(object);
+Thread.sleep(100);
+WebElement dropdownlocator=GlobalConstants.driver.findElement(By.xpath("//input[@value='"+ToSelect+"']"));
+WaitUntilObjectExist(dropdownlocator);
+clickjs(By.xpath("//label[@title='"+ToSelect+"']"));
+clickjs(object);
+Thread.sleep(20);
+
+}
+}
+
+
+
+
+
+package common;
+
+import java.net.URL;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import org.openqa.selenium.Alert;
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.NoAlertPresentException;
+import org.openqa.selenium.Platform;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.ie.InternetExplorerDriver;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.Assert;
+
+
+public class ApplicationLogin extends WebDriverGenerics
+{
+
+	public static WebDriverUtil ReusableFunctions=new WebDriverUtil();
+
+	public static boolean openbrowser(String enviornment )
+	{
+		boolean value = false;
+		try {
+
+			Print_Util.logMessage("Starting RemoteWebDriver :: ****** openbrowser() Method **********");
+			Print_Util.logMessage(" Starting Web Driver .. Trying to pick from location ");
+			//GlobalConstants.driver1 = new ThreadLocal<RemoteWebDriver>();
+			//DesiredCapabilities cap = DesiredCapabilities.internetExplorer();
+			DesiredCapabilities cap;
+			Print_Util.logDebug("Getting IE Web Driver Instance ..");
+
+
+			switch(enviornment)
+			{
+			case "Local":
+				if (driver == null)
+				{
+					System.setProperty("webdriver.ie.driver",WebDriverGenerics.getPropValuesFromFile(GlobalConstants.ApplPropFilePath, "IEDriverPathV2"));
+					cap = DesiredCapabilities.internetExplorer();
+					//cap.setCapability("nativeEvents",false);    
+					cap.setCapability("ignoreProtectedModeSettings", true);
+					cap.setCapability("disable-popup-blocking", true);
+					cap.setCapability(InternetExplorerDriver.IGNORE_ZOOM_SETTING, true);
+					cap.setCapability(InternetExplorerDriver.ENABLE_PERSISTENT_HOVERING,false);
+					cap.setCapability(InternetExplorerDriver.REQUIRE_WINDOW_FOCUS, false);
+					cap.setCapability(InternetExplorerDriver.UNEXPECTED_ALERT_BEHAVIOR, true);
+					cap.setCapability(CapabilityType.ACCEPT_SSL_CERTS, true);
+					//cap.setJavascriptEnabled(true); 
+					cap.setCapability(InternetExplorerDriver.ENABLE_ELEMENT_CACHE_CLEANUP, true); 
+					cap.setCapability(InternetExplorerDriver.IE_ENSURE_CLEAN_SESSION, true); 
+					cap.setCapability( InternetExplorerDriver.INTRODUCE_FLAKINESS_BY_IGNORING_SECURITY_DOMAINS, true);
+					cap.setBrowserName("internet explorer");
+					cap.setPlatform(Platform.ANY);
+					//cap.setCapability(InternetExplorerDriver.INITIAL_BROWSER_URL, "http://localhost");	
+					driver = new InternetExplorerDriver(cap);
+				} 
+				else
+				{
+					Print_Util.logError("IE browser not launched in Local enviornmnet or machine");	
+				}
+				break;
+			case "Grid":
+				if (driver == null)
+				{
+					System.setProperty("webdriver.ie.driver",WebDriverGenerics.getPropValuesFromFile(GlobalConstants.ApplPropFilePath, "GridIEDriverPath"));
+					Print_Util.logMessage("Running in HUB URL :: "+ WebDriverGenerics.getPropValuesFromFile(GlobalConstants.ApplPropFilePath, "GridURL"));
+					cap = DesiredCapabilities.internetExplorer();
+					cap.setCapability(InternetExplorerDriver.ENABLE_PERSISTENT_HOVERING,false);
+					cap.setCapability(InternetExplorerDriver.REQUIRE_WINDOW_FOCUS, false);
+					cap.setCapability(InternetExplorerDriver.UNEXPECTED_ALERT_BEHAVIOR, true);
+					cap.setCapability(CapabilityType.ACCEPT_SSL_CERTS, true); 
+					cap.setCapability(InternetExplorerDriver.IGNORE_ZOOM_SETTING, true);
+					cap.setCapability("ignoreProtectedModeSettings", true);
+					cap.setCapability("javascriptEnabled", true);
+					cap.setCapability(InternetExplorerDriver.ENABLE_ELEMENT_CACHE_CLEANUP, true); 
+					cap.setCapability(InternetExplorerDriver.IE_ENSURE_CLEAN_SESSION, true); 
+					cap.setCapability( InternetExplorerDriver.INTRODUCE_FLAKINESS_BY_IGNORING_SECURITY_DOMAINS, true);
+					cap.setBrowserName("internet explorer");
+					cap.setPlatform(Platform.ANY);
+					GlobalConstants.driver= new RemoteWebDriver(new URL(getPropValuesFromFile(ApplPropFilePath, "GridURL")), cap);
+					//driver1.set(new RemoteWebDriver(new URL("http://114.9.12.151:4444/wd/hub"), cap.internetExplorer()));// My grid machines			
+				} 
+				else
+				{
+					Print_Util.logError("IE browser not launched in Grid  enviornmnet or machine");	
+				}
+				break;
+
+
+			case "AWS":
+				if (driver == null)
+				{
+					Print_Util.logMessage("Running in HUB URL :: "+ WebDriverGenerics.getPropValuesFromFile(GlobalConstants.ApplPropFilePath, "AwsURL"));
+					System.setProperty("webdriver.ie.driver",WebDriverGenerics.getPropValuesFromFile(GlobalConstants.ApplPropFilePath, "AWSIEDriverPath"));
+					cap = DesiredCapabilities.internetExplorer();
+					cap.setCapability(InternetExplorerDriver.ENABLE_PERSISTENT_HOVERING,false);
+					cap.setCapability(InternetExplorerDriver.REQUIRE_WINDOW_FOCUS, false);
+					cap.setCapability(InternetExplorerDriver.UNEXPECTED_ALERT_BEHAVIOR, true);
+					cap.setCapability(CapabilityType.ACCEPT_SSL_CERTS, true); 
+					cap.setCapability(InternetExplorerDriver.IGNORE_ZOOM_SETTING, true);
+					cap.setCapability("ignoreProtectedModeSettings", true);
+					cap.setCapability("javascriptEnabled", true);
+					cap.setJavascriptEnabled(true); 
+					cap.setCapability(InternetExplorerDriver.ENABLE_ELEMENT_CACHE_CLEANUP, true); 
+					cap.setCapability(InternetExplorerDriver.IE_ENSURE_CLEAN_SESSION, true); 
+					cap.setCapability( InternetExplorerDriver.INTRODUCE_FLAKINESS_BY_IGNORING_SECURITY_DOMAINS, true);
+					cap.setBrowserName("internet explorer");
+					cap.setPlatform(Platform.ANY);
+					GlobalConstants.driver= new RemoteWebDriver(new URL(WebDriverGenerics.getPropValuesFromFile(GlobalConstants.ApplPropFilePath, "AwsURL")), cap);		
+				} 
+				else
+				{
+					Print_Util.logError("IE browser not launched in AWS enviornmnet or machine");	
+				}
+				break;
+
+			default: Print_Util.logError("please set valid enviornment to run the test cases");
+			break;
+			}
+
+			// NAvigating to URL
+			//driver.manage().timeouts().setScriptTimeout(60, TimeUnit.SECONDS);
+			driver.manage().timeouts().implicitlyWait(90, TimeUnit.SECONDS);
+			driver.manage().timeouts().pageLoadTimeout(120, TimeUnit.SECONDS);
+			driver.manage().window().maximize();	
+			((JavascriptExecutor) driver).executeScript("window.focus();");
+
+			deleteAllCookies();
+
+			// Loading URL
+			Print_Util.logMessage("Application URL is :" + GlobalConstants.Application_URL);
+			driver.get(GlobalConstants.Application_URL);
+			driver.navigate().refresh();
+			Print_Util.logMessage("URLSuccessful Launched...!");
+			//backendlogin
+			if (GlobalConstants.Backend.toUpperCase().contentEquals("YES")){
+				ReusableFunctions.Backendlogin();								
+			}
+			else
+			{				
+				if (!login1())
+				{
+					// when exception occurs while login
+					Print_Util.logError("Not Able to login into Vplan Invalid Login Details or Issue from vPlan while trying to login with Valid Credentials.  ");
+					quitBrowser();
+					Print_Util.logError("Browser Quited...! ");
+					Assert.fail("Not Able to login into Vplan");
+				}
+				else
+				{
+					value=true;
+				}			
+			} 		
+		}
+		catch (Exception e)
+		{
+			Print_Util.logDebug("Not Able to open browser" + e.getMessage());
+			GlobalConstants.booleanValue=false;
+			Print_Util.logError(" Failed at Logging into Application");
+			Assert.fail("exception was thrown");
+		}
+
+		Print_Util.logMessage("Application Launched successfully");
+		return value;
+	}
+
+	@SuppressWarnings("unused")
+	public static boolean login1() throws Exception {
+
+		boolean value = true;
+		String alertText = "";
+
+		Print_Util.logMessage("Given username as" + GlobalConstants.UserName);
+
+
+		// UAT or SIT
+		if(GlobalConstants.Application_URL.contains("uat"))
+		{		
+			Print_Util.logMessage("Application selected in UAT");
+			// Enter UserName and Password and click Submit button
+			WebDriverGenerics.enterTextByName("USERID", GlobalConstants.UserName);
+			//password
+			Print_Util.logMessage("Password entered as :: XXXXXXXXXXXXXXX");
+			element = driver.findElement(By.name("PASSWORD"));
+			element.sendKeys(GlobalConstants.Password);
+			//WebDriverGenerics.enterTextByName("PASSWORD", PasswordEncrypt.decrypt(GlobalConstants.Password));
+			if(driver.findElement(By.xpath("//input[@id='PASSWORD']//following::a[1]")).isDisplayed())
+			{		
+				clickByXPath("//input[@id='PASSWORD']//following::a[1]");
+			}
+			else
+			{
+				Print_Util.logError("Unable to click Submit button in login Page");
+			}
+			// Accept window alert 
+			try
+
+			{
+				WebDriverWait wait = new WebDriverWait(driver, 30);
+				wait.until(ExpectedConditions.alertIsPresent());
+				Alert alert = driver.switchTo().alert();
+				alert.accept();
+				Print_Util.logDebug("Handled Window popup");
+			} 
+			catch (NoAlertPresentException ex)
+			{
+				Print_Util.logError("No Alert Present");
+			}catch (TimeoutException e)
+			{
+				Print_Util.logError("Time out waiting for Alert");
+			}
+		}
+		else if(GlobalConstants.Application_URL.equalsIgnoreCase("https://vplan.verizon.com/"))
+		{		
+			Print_Util.logMessage("Application selected in Production");
+			// Enter UserName and Password and click Submit button
+			WebDriverGenerics.enterTextByName("USERID", GlobalConstants.UserName);
+			//password
+			Print_Util.logMessage("Password entered as :: XXXXXXXXXXXXXXX");
+			element = driver.findElement(By.name("PASSWORD"));
+			element.sendKeys(GlobalConstants.Password);
+			//WebDriverGenerics.enterTextByName("PASSWORD", PasswordEncrypt.decrypt(GlobalConstants.Password));
+			if(driver.findElement(By.xpath("//input[@id='PASSWORD']//following::a[1]")).isDisplayed())
+			{		
+				clickByXPath("//input[@id='PASSWORD']//following::a[1]");
+			}
+			else
+			{
+				Print_Util.logError("Unable to click Submit button in login Page");
+			}
+			// Accept window alert 
+			try
+
+			{
+				WebDriverWait wait = new WebDriverWait(driver, 90);
+				wait.until(ExpectedConditions.alertIsPresent());
+				Alert alert = driver.switchTo().alert();
+				alert.accept();
+				Print_Util.logDebug("Handled Window popup");
+			} 
+			catch (NoAlertPresentException ex)
+			{
+				Print_Util.logError("No Alert Present");
+			}catch (TimeoutException e)
+			{
+            
+				Print_Util.logError("Time out waiting for Alert waited for 90 sec to get alert...!");
+			}
+		}
+		else if (GlobalConstants.Application_URL.contains("sit"))
+		{	
+
+			// Enter UserName Password and click Submit 
+			WebDriverGenerics.enterTextByName("USERID", GlobalConstants.UserName);
+			//password
+			Print_Util.logMessage("Password entered as :: XXXXXXXXXXXXXXX");
+			element = driver.findElement(By.xpath("//form[@name='domainLogin']/div[3]/input"));
+			element.sendKeys(GlobalConstants.Password);
+
+			//WebDriverGenerics.enterTextByXPath("//form[@name='domainLogin']/div[3]/input", PasswordEncrypt.decrypt(GlobalConstants.Password));
+			clickByXPath("(//span[text()='Sign-On'])[2]");
+
+			// Accept window alert 
+			try
+			{
+				WebDriverWait wait = new WebDriverWait(driver, 30);
+				wait.until(ExpectedConditions.alertIsPresent());
+				Alert alert = driver.switchTo().alert();
+				alert.accept();
+				Print_Util.logDebug("Handled Window popup");
+			} 
+			catch (NoAlertPresentException ex)
+			{
+				Print_Util.logError("No Alert Present");
+			}catch (TimeoutException e)
+			{
+				Print_Util.logError("Time out waiting for Alert");
+			}
+
+		}
+
+		else if (GlobalConstants.Application_URL.contains("fcpsacovn22"))
+		{	
+			// Enter UserName Password and click Submit 
+			enterTextByName("usrName", GlobalConstants.UserName);
+
+			//password
+			Print_Util.logMessage("Password entered as :: XXXXXXXXXXXXXXX");
+			element = driver.findElement(By.name("password"));
+			element.sendKeys(GlobalConstants.Password);
+
+			//enterTextByName("password", PasswordEncrypt.decrypt(GlobalConstants.Password));
+
+			element = driver.findElement(getElement("(//input[@name='button'])"));
+
+			ClickByJavaScriptByElement(element);
+			WebDriverUtil.waitForPageLoaded(driver);
+
+			driver.navigate().refresh();
+			acceptAlert();
+		}
+
+		WebDriverUtil.waitForPageLoaded(driver);
+
+		Print_Util.logDebug("Page Title is ::" + driver.getTitle());		
+
+		if(! GlobalConstants.Application_URL.contains("fcpsacovn22"))
+		{
+			// Verify Page Title
+
+			if(driver.getTitle().contains("Select"))
+			{
+				value=verifyPageTitle("vPlan-Select App");
+
+				// Application specific 
+				clickById("vplan");//temp fix to handle sync issue to select vplan radio button.
+				WebDriverUtil.waitForPageLoaded(driver);
+				element=driver.findElement(By.id("vplan"));
+				if(!element.isSelected())
+				{
+					Print_Util.logMessage("Element not selected by Click so selecting again ");
+					element.click();
+				}
+				else
+				{
+					Print_Util.logMessage("Element vPlan is selected by Click ");
+				}
+				
+				//clickById("oneplan");
+				clickByName("myButton");
+				
+				List<WebElement> eleSuccess = driver.findElements(By.name("topFrame"));
+				if(eleSuccess.size() >0)
+				{
+					Print_Util.logDebug("Application Launched successfully....");
+					value = true;
+				}
+				else
+				{
+					Print_Util.logDebug("Error in some of the modules even login is successful....!");
+					value = false;
+				}
+			}
+			else
+			{
+				value = false;
+			}
+			WebDriverUtil.waitForPageLoaded(driver);
+		}
+		GlobalConstants.HomePageURL=driver.getCurrentUrl();
+		Print_Util.logDebug("login() --> boolean value is ::" + value);
+		return value;
+	}
+
+	/*	public static boolean openbrowser(String enviornment, String URL )
+	{
+		boolean value = false;
+		try {
+
+			Print_Util.logMessage("Starting RemoteWebDriver :: ****** openbrowser() Method **********");
+			Print_Util.logMessage(" Starting Web Driver .. Trying to pick from location ");
+
+			System.setProperty("webdriver.ie.driver",WebDriverGenerics.getPropValuesFromFile(GlobalConstants.ApplPropFilePath, "IEDriverPathV2"));
+			GlobalConstants.driver1 = new ThreadLocal<RemoteWebDriver>();
+			DesiredCapabilities cap = DesiredCapabilities.internetExplorer();
+			Print_Util.logDebug("Getting IE Web Driver Instance ..");
+
+
+			switch(enviornment)
+			{
+			case "Local":
+				if (driver == null)
+				{
+
+					cap.setCapability(InternetExplorerDriver.ENABLE_PERSISTENT_HOVERING,false);
+					cap.setCapability(InternetExplorerDriver.REQUIRE_WINDOW_FOCUS, false);
+					cap.setCapability(InternetExplorerDriver.UNEXPECTED_ALERT_BEHAVIOR, true);
+					cap.setCapability(CapabilityType.ACCEPT_SSL_CERTS, true); 
+					cap.setJavascriptEnabled(true); 
+					cap.setCapability(InternetExplorerDriver.ENABLE_ELEMENT_CACHE_CLEANUP, true); 
+					cap.setCapability(InternetExplorerDriver.IE_ENSURE_CLEAN_SESSION, true); 
+					cap.setCapability( InternetExplorerDriver.INTRODUCE_FLAKINESS_BY_IGNORING_SECURITY_DOMAINS, true);
+					cap.setBrowserName("internet explorer");
+					cap.setPlatform(Platform.ANY);
+					driver1.set(new InternetExplorerDriver(cap));
+					GlobalConstants.driver=WebDriverGenerics.getDriver();
+
+				} 
+				else
+				{
+					Print_Util.logError("IE browser not launched in Local enviornmnet or machine");	
+				}
+				break;
+			case "Grid":
+				if (driver == null)
+				{
+					cap.setCapability(InternetExplorerDriver.ENABLE_PERSISTENT_HOVERING,false);
+					cap.setCapability(InternetExplorerDriver.REQUIRE_WINDOW_FOCUS, false);
+					cap.setCapability(InternetExplorerDriver.UNEXPECTED_ALERT_BEHAVIOR, true);
+					cap.setCapability(CapabilityType.ACCEPT_SSL_CERTS, true); 
+					cap.setJavascriptEnabled(true); 
+					cap.setCapability(InternetExplorerDriver.ENABLE_ELEMENT_CACHE_CLEANUP, true); 
+					cap.setCapability(InternetExplorerDriver.IE_ENSURE_CLEAN_SESSION, true); 
+					cap.setCapability( InternetExplorerDriver.INTRODUCE_FLAKINESS_BY_IGNORING_SECURITY_DOMAINS, true);
+					cap.setBrowserName("internet explorer");
+					cap.setPlatform(Platform.ANY);
+					driver1.set(new RemoteWebDriver(new URL("http://10.34.60.216/wd/hub"), cap));
+					GlobalConstants.driver=WebDriverGenerics.getDriver();
+
+				} 
+				else
+				{
+					Print_Util.logError("IE browser not launched in Grid/Remote  enviornmnet or machine");	
+				}
+				break;
+
+			default: Print_Util.logError("please set valid enviornment to run the test cases");
+			break;
+			}
+
+			// NAvigating to URL
+			driver.manage().timeouts().setScriptTimeout(60, TimeUnit.SECONDS);	
+			driver.manage().window().maximize();
+
+			deleteAllCookies();
+
+			// Loading URL
+			Print_Util.logMessage("Application URL is :" + URL);
+			driver.get(URL);
+			WebDriverUtil.waitForPageLoaded(driver);
+
+			Print_Util.logMessage("URLSuccessful Launched...!");
+			//backendlogin
+			//			if (GlobalConstants.Backend.toUpperCase().contentEquals("YES")){
+			//				ReusableFunctions.Backendlogin();
+			//				
+			//				
+			//			}else{ }
+			if (!login())
+			{
+				// when exception occurs while login
+				Print_Util.logError("Not Able to login into Vplan ");
+				Assert.fail("Not Able to login into Vplan");
+			}
+			else
+			{
+				value=true;
+			}
+
+		}
+		catch (Exception e)
+		{
+			Print_Util.logDebug("Not Able to open browser" + e.getMessage());
+			GlobalConstants.booleanValue=false;
+			Print_Util.logError(" Failed at Logging into Application");
+			Assert.fail("exception was thrown");
+		}
+
+		Print_Util.logMessage("Application Launched successfully");
+		return value;
+	}
+
+	public static boolean launchApplication(String browsername,String Enviornment)
+	{
+		boolean value = false;
+		try {
+			Print_Util.logMessage("Starting RemoteWebDriver :: ****** openbrowser() Method **********");
+			Print_Util.logMessage(" Starting Web Driver .. Trying to pick from location ");
+
+			switch(browsername)
+			{
+			case "IE":
+				if (driver == null && Enviornment.equals("Local"))
+				{
+					System.setProperty("webdriver.ie.driver",WebDriverGenerics.getPropValuesFromFile(GlobalConstants.ApplPropFilePath, "IEDriverPathV2"));
+					cap.setCapability(InternetExplorerDriver.ENABLE_PERSISTENT_HOVERING,false);
+					cap.setCapability(InternetExplorerDriver.REQUIRE_WINDOW_FOCUS, false);
+					cap.setCapability(InternetExplorerDriver.UNEXPECTED_ALERT_BEHAVIOR, true);
+					cap.setCapability(CapabilityType.ACCEPT_SSL_CERTS, true); 
+					cap.setJavascriptEnabled(true); 
+					cap.setCapability(InternetExplorerDriver.ENABLE_ELEMENT_CACHE_CLEANUP, true); 
+					cap.setCapability(InternetExplorerDriver.IE_ENSURE_CLEAN_SESSION, true); 
+					cap.setCapability( InternetExplorerDriver.INTRODUCE_FLAKINESS_BY_IGNORING_SECURITY_DOMAINS, true);
+					cap.setBrowserName("internet explorer");
+					cap.setPlatform(Platform.ANY);
+					driver = new InternetExplorerDriver(cap);
+				} 
+				else if (driver == null && Enviornment.equals("Grid"))
+				{
+					cap.setCapability(InternetExplorerDriver.ENABLE_PERSISTENT_HOVERING,false);
+					cap.setCapability(InternetExplorerDriver.REQUIRE_WINDOW_FOCUS, false);
+					cap.setCapability(InternetExplorerDriver.UNEXPECTED_ALERT_BEHAVIOR, true);
+					cap.setCapability(CapabilityType.ACCEPT_SSL_CERTS, true); 
+					cap.setJavascriptEnabled(true); 
+					cap.setCapability(InternetExplorerDriver.ENABLE_ELEMENT_CACHE_CLEANUP, true); 
+					cap.setCapability(InternetExplorerDriver.IE_ENSURE_CLEAN_SESSION, true); 
+					cap.setCapability( InternetExplorerDriver.INTRODUCE_FLAKINESS_BY_IGNORING_SECURITY_DOMAINS, true);
+					cap.setBrowserName("internet explorer");
+					cap.setPlatform(Platform.ANY);
+					driver =new RemoteWebDriver(new URL("http://10.34.60.216/wd/hub"), cap);
+				}
+				break;
+
+			case "firefox":
+				if (driver == null && Enviornment.equals("Local"))
+				{
+					driver = new FirefoxDriver(cap);
+				} 
+				else if (driver == null && Enviornment.equals("Grid"))
+				{
+
+					cap.setBrowserName("firefox");
+					cap.setPlatform(Platform.ANY);
+					driver =new RemoteWebDriver(new URL("http://10.34.60.216/wd/hub"), cap);
+				}
+				break;
+
+			case "chrome":
+				if (driver == null && Enviornment.equals("Local"))
+				{
+					//ChromeOptions options = new ChromeOptions();
+					//options.addArguments("chrome.switches","--disable-extensions");
+					System.setProperty("webdriver.chrome.driver", "./drivers/chromedriver.exe");
+					driver =new ChromeDriver();
+				} 
+				else if (driver == null && Enviornment.equals("Grid"))
+				{
+					cap.setBrowserName("googlechrome");
+					cap.setPlatform(Platform.ANY);
+					driver =new RemoteWebDriver(new URL("http://10.34.60.216/wd/hub"), cap);
+				}
+				break;
+
+			default: Print_Util.logError("please set valid enviornment & browserName to run the test cases");
+			break;
+			}
+
+			// NAvigating to URL
+			driver.manage().timeouts().setScriptTimeout(30, TimeUnit.SECONDS);	
+			driver.manage().window().maximize();
+			deleteAllCookies();
+
+			// Loading URL
+			Print_Util.logMessage("Application URL is :" + GlobalConstants.Application_URL);
+			driver.get(GlobalConstants.Application_URL);
+			WebDriverUtil.waitForPageLoaded(driver);
+
+			Print_Util.logMessage("URLSuccessful Launched...!");
+
+			if (!login1())
+			{
+				// when exception occurs while login
+				Print_Util.logError("Not Able to login into Oneplan ");
+				Assert.fail("Not Able to login into Oneplan");
+			}
+			else
+			{
+				value=true;
+			}
+
+		} 
+		catch (Exception e)
+		{
+			Print_Util.logDebug("Not Able to open browser" + e.getMessage());
+			GlobalConstants.booleanValue=false;
+			Print_Util.logError(" Failed at Logging into Application");
+			Assert.fail("exception was thrown");
+		}
+		return value;
+	}
+
+
+	// Login
+
+	public static boolean login() throws Exception {
+
+		boolean value = false;
+
+		Print_Util.logMessage("Given username as" + GlobalConstants.UserName);
+		Print_Util.logMessage( "Given Password as"+ GlobalConstants.Password);
+
+		// UAT or SIT
+
+		if (GlobalConstants.Application_URL.contains("uat"))
+		{
+			WebElement password = driver.findElement(By.name("PASSWORD"));
+			highLightElement(driver, password);
+			password.clear();
+			password.sendKeys(PasswordEncrypt.decrypt(GlobalConstants.Password));
+
+			Print_Util.logMessage("Entered UAT Password successfully");
+			//clickByXPath("//a[@title='Sign-On']/span");	
+
+			if(driver.findElement(By.xpath("//input[@id='PASSWORD']//following::a[1]")).isDisplayed())
+			{
+				//clickByXPath("//a[@role='button']"); // new login screen updated script on 24/01/2017
+
+				clickByXPath("//input[@id='PASSWORD']//following::a[1]");
+			}
+			else
+			{
+				Print_Util.logError("Unable to click Submit button in login Page");
+			}
+		}
+
+		else if (GlobalConstants.Application_URL.contains("sit"))
+		{
+			WebElement password = driver.findElement(By.xpath(".//form[@name='domainLogin']/div[3]/input"));
+			highLightElement(driver, password);
+			password.clear();
+			password.sendKeys(PasswordEncrypt.decrypt(GlobalConstants.Password));
+			Print_Util.logMessage("Entered SIT Password successfully");
+			clickByXPath("(//span[text()='Sign-On'])[2]");
+
+		}
+		// Accept window alert 
+		WebDriverGenerics.acceptWindowAlert(driver);
+		WebDriverUtil.waitForPageLoaded(driver);
+
+		Print_Util.logDebug("Handled Window popup & Application successfully launched");
+		Print_Util.logDebug("Page Title is ::" + driver.getTitle());
+
+		// Verify Page Title
+		value=verifyPageTitle("vPlan-Select App");
+
+		// Application specific 
+		WebDriverUtil.waitForPageLoaded(driver);
+		clickById("vplan");
+		WebDriverUtil.waitForPageLoaded(driver);
+		clickByName("myButton");
+		WebDriverUtil.waitForPageLoaded(driver);
+
+		GlobalConstants.HomePageURL=driver.getCurrentUrl();
+
+		Print_Util.logDebug("login() --> boolean value is ::" + value);
+
+		return value;
+	}
+	 */
+
+
+
+
+}
+
+
